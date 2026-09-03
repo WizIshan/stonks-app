@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
+import java.time.YearMonth
 
 /**
  * The app's single entry point to stored data.
@@ -84,6 +85,42 @@ class FinanceRepository(
 
         return combine(expenses, income) { spend, earned ->
             (spend + earned).sortedFor(filter.sort)
+        }
+    }
+
+    /**
+     * Everything the Dashboard shows for one month.
+     *
+     * Trip totals are deliberately not month-scoped: a trip spans whatever dates it spans,
+     * and clipping it to a calendar month would report a fraction of the trip as the trip.
+     */
+    fun observeDashboard(month: YearMonth, trendMonths: Int = 12): Flow<DashboardData> {
+        val key = month.storageKey()
+
+        val totals = combine(
+            expenseDao.observeMonthTotal(key),
+            incomeDao.observeMonthTotal(key),
+        ) { spend, income -> spend to income }
+
+        val breakdowns = combine(
+            expenseDao.observeTotalsByCategory(key),
+            expenseDao.observeTotalsByTrip(),
+        ) { categories, trips -> categories.toRankedSlices() to trips.toTripSlices() }
+
+        val trend = combine(
+            expenseDao.observeMonthlyTotals(),
+            incomeDao.observeMonthlyTotals(),
+        ) { spend, income -> buildTrend(spend, income, month, trendMonths) }
+
+        return combine(totals, breakdowns, trend) { (spend, income), (byCategory, byTrip), points ->
+            DashboardData(
+                month = month,
+                spendMinor = spend,
+                incomeMinor = income,
+                byCategory = byCategory,
+                byTrip = byTrip,
+                trend = points,
+            )
         }
     }
 

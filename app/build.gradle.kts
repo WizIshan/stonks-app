@@ -73,8 +73,6 @@ dependencies {
     // Recurring transactions + budget alerts
     implementation(libs.androidx.work.runtime.ktx)
 
-    // Charts
-    implementation(libs.vico.compose.m3)
 
     // Local JVM tests (Room DAOs run under Robolectric — no emulator)
     testImplementation(libs.junit)

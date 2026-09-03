@@ -61,4 +61,20 @@
     <string name="history_empty_message">Add your first expense to see it here.</string>
     <string name="history_no_matches_headline">No matches</string>
     <string name="history_no_matches_message">Nothing matches these filters.</string>
+    <!-- Dashboard -->
+    <string name="dashboard_title">Dashboard</string>
+    <string name="dashboard_spent_this_month">Spent</string>
+    <string name="dashboard_income">Income</string>
+    <string name="dashboard_net">Net</string>
+    <string name="dashboard_by_category">Spend by category</string>
+    <string name="dashboard_by_trip">Spend by trip</string>
+    <string name="dashboard_trend">Last 12 months</string>
+    <string name="dashboard_previous_month">Previous month</string>
+    <string name="dashboard_next_month">Next month</string>
+    <string name="dashboard_empty_headline">No spend this month</string>
+    <string name="dashboard_empty_message">Your summary appears once you log something.</string>
+    <string name="dashboard_no_trips">No trip spend yet</string>
+    <string name="trend_spend">Spend</string>
+    <string name="trend_income">Income</string>
+    <string name="trend_detail">spend %1$s · income %2$s · net %3$s</string>
 </resources>

@@ -196,7 +196,13 @@ appears in a row directly beneath the chart (not a floating tooltip). Selected m
 gets a 2.dp surface-colored ring. Filters sit in **one horizontal `FilterChip` row above**
 the chart, never inside it.
 
-**Library:** Vico (Compose-native). Feed it these tokens — do not accept its defaults.
+**Library: none — charts are drawn with Compose `Canvas`.** Vico was the original pick and
+was dropped once the specs above were settled. Only the trend line was ever a candidate for
+it: ranked bars are a labelled list with a rule behind each row, and budget meters and the
+diverging bar are custom regardless. Against that one chart, a library brings defaults this
+document spends its time overriding — its own gridlines, its own markers, its own label
+placement. Drawing directly is less code than configuring it away, and it is the only way
+these mark specs are exactly met rather than approximately.
 
 ---
 
