@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -24,6 +25,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dev.wizishan.stonks.R
+import dev.wizishan.stonks.ui.budget.BudgetRoute
 import dev.wizishan.stonks.ui.dashboard.DashboardRoute
 import dev.wizishan.stonks.ui.entry.AddEntryRoute
 import dev.wizishan.stonks.ui.history.HistoryRoute
@@ -32,6 +34,7 @@ import dev.wizishan.stonks.ui.recurring.RecurringRoute
 object Routes {
     const val DASHBOARD = "dashboard"
     const val HISTORY = "history"
+    const val BUDGETS = "budgets"
     const val ADD = "add"
     const val RECURRING = "recurring"
 }
@@ -39,8 +42,8 @@ object Routes {
 /**
  * The destinations the bottom bar switches between.
  *
- * Budgets and Settings from DESIGN.md §7 join this enum when those screens exist; the bar
- * lists what the app actually has rather than what it will have.
+ * Settings from DESIGN.md §7 joins this enum when that screen exists; the bar lists what
+ * the app actually has rather than what it will have.
  */
 enum class TopLevelDestination(
     val route: String,
@@ -49,6 +52,7 @@ enum class TopLevelDestination(
 ) {
     DASHBOARD(Routes.DASHBOARD, R.string.dashboard_title, Icons.Default.Home),
     HISTORY(Routes.HISTORY, R.string.history_title, Icons.AutoMirrored.Filled.List),
+    BUDGETS(Routes.BUDGETS, R.string.budgets_title, Icons.Default.Notifications),
 }
 
 @Composable
@@ -103,6 +107,9 @@ fun StonksApp(
             }
             composable(Routes.HISTORY) {
                 HistoryRoute(onAddClick = { navController.navigate(Routes.ADD) })
+            }
+            composable(Routes.BUDGETS) {
+                BudgetRoute()
             }
             composable(Routes.ADD) {
                 AddEntryRoute(onBack = { navController.popBackStack() })

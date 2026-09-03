@@ -8,11 +8,13 @@ import androidx.room.migration.Migration
 import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
 import dev.wizishan.stonks.core.CategorySlots
+import dev.wizishan.stonks.data.local.dao.BudgetDao
 import dev.wizishan.stonks.data.local.dao.CategoryDao
 import dev.wizishan.stonks.data.local.dao.ExpenseDao
 import dev.wizishan.stonks.data.local.dao.IncomeDao
 import dev.wizishan.stonks.data.local.dao.RecurringRuleDao
 import dev.wizishan.stonks.data.local.dao.TripDao
+import dev.wizishan.stonks.data.local.entity.Budget
 import dev.wizishan.stonks.data.local.entity.Category
 import dev.wizishan.stonks.data.local.entity.Expense
 import dev.wizishan.stonks.data.local.entity.Income
@@ -20,8 +22,11 @@ import dev.wizishan.stonks.data.local.entity.RecurringRule
 import dev.wizishan.stonks.data.local.entity.Trip
 
 @Database(
-    entities = [Category::class, Trip::class, Expense::class, Income::class, RecurringRule::class],
-    version = 2,
+    entities = [
+        Category::class, Trip::class, Expense::class, Income::class,
+        RecurringRule::class, Budget::class,
+    ],
+    version = 3,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -32,6 +37,7 @@ abstract class StonksDatabase : RoomDatabase() {
     abstract fun expenseDao(): ExpenseDao
     abstract fun incomeDao(): IncomeDao
     abstract fun recurringRuleDao(): RecurringRuleDao
+    abstract fun budgetDao(): BudgetDao
 
     companion object {
         const val NAME = "stonks.db"
@@ -96,10 +102,35 @@ abstract class StonksDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Adds `budgets`.
+         *
+         * The category foreign key cascades: a budget for a category that no longer exists
+         * is not a budget, and leaving it would mean an alert with nothing to name. That
+         * differs from expenses, where RESTRICT protects history — a limit is a setting,
+         * not a record of something that happened.
+         */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `budgets` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`categoryId` INTEGER, " +
+                        "`monthlyLimitMinor` INTEGER NOT NULL, " +
+                        "`alertThresholdPercent` INTEGER NOT NULL, " +
+                        "`notifiedThresholdMonth` TEXT, " +
+                        "`notifiedOverMonth` TEXT, " +
+                        "FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) " +
+                        "ON UPDATE NO ACTION ON DELETE CASCADE )"
+                )
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_budgets_categoryId` ON `budgets` (`categoryId`)")
+            }
+        }
+
         fun build(context: Context): StonksDatabase =
             Room.databaseBuilder(context.applicationContext, StonksDatabase::class.java, NAME)
                 .addCallback(SeedCallback)
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
     }
 }

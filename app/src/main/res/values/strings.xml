@@ -97,4 +97,29 @@
     <string name="trend_spend">Spend</string>
     <string name="trend_income">Income</string>
     <string name="trend_detail">spend %1$s · income %2$s · net %3$s</string>
+    <!-- Budgets -->
+    <string name="budgets_title">Budgets</string>
+    <string name="budget_overall">Overall</string>
+    <string name="budget_progress">%1$s of %2$s · %3$d%%</string>
+    <string name="budget_remaining">%1$s left</string>
+    <string name="budget_over_by">%1$s over</string>
+    <string name="budget_set">Set a budget</string>
+    <string name="budget_edit">Edit budget</string>
+    <string name="budget_limit_label">Monthly limit</string>
+    <string name="budget_threshold_label">Alert me at</string>
+    <string name="budget_category_label">Applies to</string>
+    <string name="budget_remove">Remove budget</string>
+    <string name="budget_save">Save budget</string>
+    <string name="budget_empty_headline">No budgets set</string>
+    <string name="budget_empty_message">Set a monthly limit to track spend against it.</string>
+    <string name="budget_amount_error">Enter a limit above zero</string>
+    <string name="budget_notifications_headline">Alerts are off</string>
+    <string name="budget_notifications_message">Allow notifications to be told when a budget is close to its limit.</string>
+    <string name="budget_notifications_enable">Turn on alerts</string>
+    <string name="budget_channel_name">Budget alerts</string>
+    <string name="budget_channel_description">Told when spend crosses a budget threshold</string>
+    <string name="budget_alert_threshold_title">%1$s budget at %2$d%%</string>
+    <string name="budget_alert_over_title">%1$s budget exceeded</string>
+    <string name="budget_alert_body">%1$s of %2$s spent this month</string>
+    <string name="dashboard_budgets">Budgets</string>
 </resources>

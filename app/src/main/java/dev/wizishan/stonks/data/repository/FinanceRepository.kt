@@ -1,11 +1,15 @@
 package dev.wizishan.stonks.data.repository
 
 import dev.wizishan.stonks.core.CategorySlots
+import dev.wizishan.stonks.data.budget.BudgetChecker
+import dev.wizishan.stonks.data.budget.BudgetProgress
+import dev.wizishan.stonks.data.local.dao.BudgetDao
 import dev.wizishan.stonks.data.local.dao.CategoryDao
 import dev.wizishan.stonks.data.local.dao.ExpenseDao
 import dev.wizishan.stonks.data.local.dao.IncomeDao
 import dev.wizishan.stonks.data.local.dao.RecurringRuleDao
 import dev.wizishan.stonks.data.local.dao.TripDao
+import dev.wizishan.stonks.data.local.entity.Budget
 import dev.wizishan.stonks.data.local.entity.Category
 import dev.wizishan.stonks.data.local.entity.Expense
 import dev.wizishan.stonks.data.local.entity.Income
@@ -37,6 +41,7 @@ class FinanceRepository(
     private val expenseDao: ExpenseDao,
     private val incomeDao: IncomeDao,
     private val recurringRuleDao: RecurringRuleDao,
+    private val budgetDao: BudgetDao,
 ) {
 
     // ---- reads -------------------------------------------------------------------
@@ -48,6 +53,51 @@ class FinanceRepository(
     fun observeIncomeSources(): Flow<List<String>> = incomeDao.observeSources()
 
     fun observeRecurringRules(): Flow<List<RecurringRule>> = recurringRuleDao.observeAll()
+
+    fun observeBudgets(): Flow<List<Budget>> = budgetDao.observeAll()
+
+    /**
+     * Every budget with this month's spend against it.
+     *
+     * The overall budget is fed the month total rather than the sum of the per-category
+     * budgets: it is a limit on everything, including categories that have no budget of
+     * their own.
+     */
+    fun observeBudgetProgress(month: YearMonth): Flow<List<BudgetProgress>> {
+        val key = month.storageKey()
+        return combine(
+            budgetDao.observeAll(),
+            categoryDao.observeAll(),
+            expenseDao.observeTotalsByCategory(key),
+            expenseDao.observeMonthTotal(key),
+        ) { budgets, categories, categoryTotals, monthTotal ->
+            val categoriesById = categories.associateBy { it.id }
+            val spendByCategory = categoryTotals.associate { it.categoryId to it.totalMinor }
+
+            budgets.mapNotNull { budget ->
+                val category = budget.categoryId?.let(categoriesById::get)
+                if (budget.categoryId != null && category == null) return@mapNotNull null
+
+                BudgetProgress(
+                    budgetId = budget.id,
+                    categoryId = budget.categoryId,
+                    label = category?.name ?: BudgetChecker.OVERALL_LABEL,
+                    colorHex = category?.colorHex,
+                    spentMinor = if (budget.categoryId == null) {
+                        monthTotal
+                    } else {
+                        spendByCategory[budget.categoryId] ?: 0
+                    },
+                    limitMinor = budget.monthlyLimitMinor,
+                    thresholdPercent = budget.alertThresholdPercent,
+                )
+            }.sortedWith(
+                // Overall first — it frames everything below it — then biggest limit down.
+                compareByDescending<BudgetProgress> { it.isOverall }
+                    .thenByDescending { it.limitMinor },
+            )
+        }
+    }
 
     /**
      * The History list: expenses and income as one stream.
@@ -256,6 +306,35 @@ class FinanceRepository(
     /** Entries the rule already generated are kept — they are spend that really happened. */
     suspend fun deleteRule(ruleId: Long) {
         recurringRuleDao.getById(ruleId)?.let { recurringRuleDao.delete(it) }
+    }
+
+    /**
+     * Set or replace the limit for a category, or for everything when [categoryId] is null.
+     *
+     * Reuses the existing row's id so a changed limit keeps the month's alert history —
+     * raising a limit you have already been warned about should not immediately warn you
+     * again.
+     */
+    suspend fun setBudget(
+        categoryId: Long?,
+        monthlyLimitMinor: Long,
+        alertThresholdPercent: Int = Budget.DEFAULT_THRESHOLD_PERCENT,
+    ): Long {
+        val existing = budgetDao.getForCategory(categoryId)
+        return budgetDao.upsert(
+            Budget(
+                id = existing?.id ?: 0,
+                categoryId = categoryId,
+                monthlyLimitMinor = monthlyLimitMinor,
+                alertThresholdPercent = alertThresholdPercent,
+                notifiedThresholdMonth = existing?.notifiedThresholdMonth,
+                notifiedOverMonth = existing?.notifiedOverMonth,
+            )
+        )
+    }
+
+    suspend fun deleteBudget(budgetId: Long) {
+        budgetDao.getById(budgetId)?.let { budgetDao.delete(it) }
     }
 
     suspend fun addTrip(name: String, startDate: LocalDate? = null, endDate: LocalDate? = null): Long =

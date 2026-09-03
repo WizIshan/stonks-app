@@ -35,6 +35,7 @@ import dev.wizishan.stonks.data.repository.DashboardData
 import dev.wizishan.stonks.data.repository.MonthPoint
 import dev.wizishan.stonks.data.repository.RankedSlice
 import dev.wizishan.stonks.ui.AppViewModelProvider
+import dev.wizishan.stonks.ui.components.BudgetMeter
 import dev.wizishan.stonks.ui.components.EmptyState
 import dev.wizishan.stonks.ui.components.RankedBarChart
 import dev.wizishan.stonks.ui.components.StatTile
@@ -126,6 +127,14 @@ fun DashboardScreen(
                 if (state.data.byTrip.isNotEmpty()) {
                     Section(stringResource(R.string.dashboard_by_trip)) {
                         RankedBarChart(state.data.byTrip)
+                    }
+                }
+
+                if (state.budgets.isNotEmpty()) {
+                    Section(stringResource(R.string.dashboard_budgets)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(Spacing.lg)) {
+                            state.budgets.forEach { BudgetMeter(it) }
+                        }
                     }
                 }
 

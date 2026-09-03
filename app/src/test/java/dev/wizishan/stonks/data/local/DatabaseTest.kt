@@ -79,6 +79,7 @@ abstract class DatabaseTest {
         expenseDao = db.expenseDao(),
         incomeDao = db.incomeDao(),
         recurringRuleDao = db.recurringRuleDao(),
+        budgetDao = db.budgetDao(),
     )
 
     /** The generator over this test database. */

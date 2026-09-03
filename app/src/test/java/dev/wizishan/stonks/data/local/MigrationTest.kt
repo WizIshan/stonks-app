@@ -5,6 +5,8 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import dev.wizishan.stonks.data.local.entity.Budget
+import dev.wizishan.stonks.data.local.entity.Category
 import dev.wizishan.stonks.data.local.entity.RecurringFrequency
 import dev.wizishan.stonks.data.local.entity.RecurringRule
 import dev.wizishan.stonks.data.local.entity.RecurringType
@@ -22,7 +24,7 @@ import java.io.File
 import java.util.concurrent.Executor
 
 /**
- * Exercises the real 1 → 2 upgrade against a hand-built version 1 database.
+ * Exercises the real upgrade path against a hand-built version 1 database.
  *
  * This matters more than most tests here: the app is already installed with real data and
  * has no export yet, so a migration that fails takes someone's records with it. Room
@@ -75,10 +77,10 @@ class MigrationTest {
         db.close()
     }
 
-    private fun openVersion2(): StonksDatabase {
+    private fun openLatest(): StonksDatabase {
         val direct = Executor(Runnable::run)
         return Room.databaseBuilder(context, StonksDatabase::class.java, dbFile.absolutePath)
-            .addMigrations(StonksDatabase.MIGRATION_1_2)
+            .addMigrations(StonksDatabase.MIGRATION_1_2, StonksDatabase.MIGRATION_2_3)
             .allowMainThreadQueries()
             .setQueryExecutor(direct)
             .setTransactionExecutor(direct)
@@ -86,10 +88,10 @@ class MigrationTest {
     }
 
     @Test
-    fun `version 1 data survives the upgrade`() = runTest {
+    fun `both migrations run in sequence from version 1`() = runTest {
         createVersion1Database()
 
-        val db = openVersion2()
+        val db = openLatest()
         try {
             assertEquals("Food & Drink", db.categoryDao().getByName("Food & Drink")?.name)
             assertEquals(4250L, db.expenseDao().getById(1)?.amountMinor)
@@ -103,7 +105,7 @@ class MigrationTest {
     fun `the new table is usable straight after the upgrade`() = runTest {
         createVersion1Database()
 
-        val db = openVersion2()
+        val db = openLatest()
         try {
             val id = db.recurringRuleDao().insert(
                 RecurringRule(
@@ -123,10 +125,32 @@ class MigrationTest {
     }
 
     @Test
+    fun `the budgets table arrives with version 3 and cascades from its category`() = runTest {
+        createVersion1Database()
+
+        val db = openLatest()
+        try {
+            // A category with no expenses, so the expenses RESTRICT key is not what is
+            // under test here — the budget cascade is.
+            val categoryId = db.categoryDao().insert(Category(name = "Coffee", colorHex = "#EB6834"))
+            db.budgetDao().upsert(
+                Budget(categoryId = categoryId, monthlyLimitMinor = 50_000, alertThresholdPercent = 80)
+            )
+            assertEquals(1, db.budgetDao().getAll().size)
+
+            db.categoryDao().delete(requireNotNull(db.categoryDao().getById(categoryId)))
+
+            assertEquals(0, db.budgetDao().getAll().size)
+        } finally {
+            db.close()
+        }
+    }
+
+    @Test
     fun `the seed callback does not re-run on an upgrade`() = runTest {
         createVersion1Database()
 
-        val db = openVersion2()
+        val db = openLatest()
         try {
             // onCreate fires for a new database, not an upgraded one. If it ran here the
             // eight defaults would land on top of the user's existing categories.

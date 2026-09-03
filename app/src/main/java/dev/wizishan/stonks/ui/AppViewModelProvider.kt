@@ -5,6 +5,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.wizishan.stonks.StonksApplication
+import dev.wizishan.stonks.ui.budget.BudgetViewModel
 import dev.wizishan.stonks.ui.dashboard.DashboardViewModel
 import dev.wizishan.stonks.ui.entry.AddEntryViewModel
 import dev.wizishan.stonks.ui.history.HistoryViewModel
@@ -21,6 +22,7 @@ object AppViewModelProvider {
         initializer { HistoryViewModel(stonksApplication().container.repository) }
         initializer { DashboardViewModel(stonksApplication().container.repository) }
         initializer { RecurringViewModel(stonksApplication().container.repository) }
+        initializer { BudgetViewModel(stonksApplication().container.repository) }
     }
 }
 

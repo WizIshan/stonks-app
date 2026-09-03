@@ -2,20 +2,22 @@ package dev.wizishan.stonks.ui.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.wizishan.stonks.data.budget.BudgetProgress
 import dev.wizishan.stonks.data.repository.DashboardData
 import dev.wizishan.stonks.data.repository.FinanceRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import java.time.YearMonth
 
 data class DashboardUiState(
     val data: DashboardData = DashboardData(),
+    val budgets: List<BudgetProgress> = emptyList(),
     val loading: Boolean = true,
 ) {
     /**
@@ -37,8 +39,14 @@ class DashboardViewModel(
     private val month = MutableStateFlow(YearMonth.now())
 
     val uiState: StateFlow<DashboardUiState> = month
-        .flatMapLatest { repository.observeDashboard(it) }
-        .map { DashboardUiState(data = it, loading = false) }
+        .flatMapLatest { selected ->
+            combine(
+                repository.observeDashboard(selected),
+                repository.observeBudgetProgress(selected),
+            ) { data, budgets ->
+                DashboardUiState(data = data, budgets = budgets, loading = false)
+            }
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(StopTimeoutMillis),
