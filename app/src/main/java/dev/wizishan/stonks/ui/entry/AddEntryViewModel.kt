@@ -1,7 +1,9 @@
 package dev.wizishan.stonks.ui.entry
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.wizishan.stonks.core.Money
 import dev.wizishan.stonks.data.local.entity.RecurringFrequency
 import dev.wizishan.stonks.data.recurring.RecurringGenerator
 import dev.wizishan.stonks.data.repository.FinanceRepository
@@ -18,7 +20,20 @@ import java.time.LocalDate
 class AddEntryViewModel(
     private val repository: FinanceRepository,
     private val recurringGenerator: RecurringGenerator,
+    savedStateHandle: SavedStateHandle = SavedStateHandle(),
 ) : ViewModel() {
+
+    private val editingId: Long? = savedStateHandle.get<Long>(ENTRY_ID_ARG)?.takeIf { it >= 0 }
+
+    /**
+     * Which table the row being edited came from.
+     *
+     * Carried on the route rather than looked up: expenses and income both autogenerate
+     * ids from 1, so an id alone does not say which table it belongs to.
+     */
+    private val editingType: EntryType = savedStateHandle.get<String>(ENTRY_TYPE_ARG)
+        ?.let { runCatching { EntryType.valueOf(it) }.getOrNull() }
+        ?: EntryType.EXPENSE
 
     private val _uiState = MutableStateFlow(AddEntryUiState())
     val uiState: StateFlow<AddEntryUiState> = _uiState.asStateFlow()
@@ -33,6 +48,8 @@ class AddEntryViewModel(
     val events = _events.receiveAsFlow()
 
     init {
+        if (editingId != null) loadForEditing(editingId, editingType)
+
         viewModelScope.launch {
             combine(
                 repository.observeCategories(),
@@ -47,7 +64,41 @@ class AddEntryViewModel(
         }
     }
 
-    fun setType(type: EntryType) = _uiState.update { it.copy(type = type) }
+    private fun loadForEditing(id: Long, type: EntryType) {
+        viewModelScope.launch {
+            if (type == EntryType.EXPENSE) {
+                val expense = repository.getExpense(id) ?: return@launch
+                _uiState.update {
+                    it.copy(
+                        editingId = id,
+                        type = EntryType.EXPENSE,
+                        amountInput = Money.toMajor(expense.amountMinor).toPlainString(),
+                        date = expense.date,
+                        categoryId = expense.categoryId,
+                        tripId = expense.tripId,
+                        note = expense.note.orEmpty(),
+                    )
+                }
+            } else {
+                val income = repository.getIncome(id) ?: return@launch
+                _uiState.update {
+                    it.copy(
+                        editingId = id,
+                        type = EntryType.INCOME,
+                        amountInput = Money.toMajor(income.amountMinor).toPlainString(),
+                        date = income.date,
+                        source = income.source,
+                        note = income.note.orEmpty(),
+                    )
+                }
+            }
+        }
+    }
+
+    /** Switching type is not offered while editing; an entry does not change table. */
+    fun setType(type: EntryType) = _uiState.update {
+        if (it.isEditing) it else it.copy(type = type)
+    }
 
     fun setAmount(input: String) = _uiState.update { it.copy(amountInput = input) }
 
@@ -63,7 +114,8 @@ class AddEntryViewModel(
     fun setNote(note: String) = _uiState.update { it.copy(note = note) }
 
     /** Null makes this a one-off entry again. */
-    fun setFrequency(frequency: RecurringFrequency?) = _uiState.update { it.copy(frequency = frequency) }
+    fun setFrequency(frequency: RecurringFrequency?) =
+        _uiState.update { it.copy(frequency = frequency) }
 
     fun save() {
         val state = _uiState.value
@@ -76,18 +128,18 @@ class AddEntryViewModel(
         viewModelScope.launch {
             val amountMinor = requireNotNull(state.amountMinor)
             runCatching {
-                if (state.frequency != null) {
-                    saveRecurring(state, amountMinor)
-                } else if (state.isExpense) {
-                    repository.addExpense(
+                when {
+                    state.editingId != null -> saveEdit(state, amountMinor)
+                    state.frequency != null -> saveRecurring(state, amountMinor)
+                    state.isExpense -> repository.addExpense(
                         amountMinor = amountMinor,
                         date = state.date,
                         categoryId = requireNotNull(state.categoryId),
                         tripId = state.tripId,
                         note = state.note,
                     )
-                } else {
-                    repository.addIncome(
+
+                    else -> repository.addIncome(
                         amountMinor = amountMinor,
                         date = state.date,
                         source = state.source,
@@ -95,9 +147,16 @@ class AddEntryViewModel(
                     )
                 }
             }.onSuccess {
-                // Keep the type, date and trip: logging several entries from one receipt
-                // or one trip day is the common case, and retyping them each time is the
-                // kind of friction that stops someone using a tracker at all.
+                if (state.editingId != null) {
+                    // An edit is finished once saved, so the form keeps its values and the
+                    // screen closes, rather than clearing itself ready for another entry.
+                    _uiState.update { it.copy(saving = false) }
+                    _events.send(AddEntryEvent.Updated(state.type, amountMinor))
+                    return@launch
+                }
+                // Keep the type, date, category and trip: logging several entries from one
+                // receipt or one trip day is the common case, and retyping them each time
+                // is the kind of friction that stops someone using a tracker at all.
                 _uiState.update {
                     it.copy(
                         amountInput = "",
@@ -111,6 +170,43 @@ class AddEntryViewModel(
                 _uiState.update { it.copy(saving = false) }
                 _events.send(AddEntryEvent.SaveFailed(error.message))
             }
+        }
+    }
+
+    fun requestDelete() = _uiState.update { it.copy(deleteRequested = true) }
+
+    fun cancelDelete() = _uiState.update { it.copy(deleteRequested = false) }
+
+    fun confirmDelete() {
+        val state = _uiState.value
+        val id = state.editingId ?: return
+        _uiState.update { it.copy(deleteRequested = false, saving = true) }
+        viewModelScope.launch {
+            if (state.isExpense) repository.deleteExpense(id) else repository.deleteIncome(id)
+            _uiState.update { it.copy(saving = false) }
+            _events.send(AddEntryEvent.Deleted)
+        }
+    }
+
+    private suspend fun saveEdit(state: AddEntryUiState, amountMinor: Long) {
+        val id = requireNotNull(state.editingId)
+        if (state.isExpense) {
+            repository.updateExpense(
+                id = id,
+                amountMinor = amountMinor,
+                date = state.date,
+                categoryId = requireNotNull(state.categoryId),
+                tripId = state.tripId,
+                note = state.note,
+            )
+        } else {
+            repository.updateIncome(
+                id = id,
+                amountMinor = amountMinor,
+                date = state.date,
+                source = state.source,
+                note = state.note,
+            )
         }
     }
 
@@ -141,6 +237,11 @@ class AddEntryViewModel(
         }
         recurringGenerator.generateDue()
     }
+
+    companion object {
+        const val ENTRY_ID_ARG = "entryId"
+        const val ENTRY_TYPE_ARG = "entryType"
+    }
 }
 
 sealed interface AddEntryEvent {
@@ -149,5 +250,10 @@ sealed interface AddEntryEvent {
         val amountMinor: Long,
         val recurring: Boolean,
     ) : AddEntryEvent
+
+    data class Updated(val type: EntryType, val amountMinor: Long) : AddEntryEvent
+
+    data object Deleted : AddEntryEvent
+
     data class SaveFailed(val message: String?) : AddEntryEvent
 }

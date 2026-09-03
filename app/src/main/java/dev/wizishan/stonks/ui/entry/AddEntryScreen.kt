@@ -18,6 +18,8 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -83,19 +85,23 @@ fun AddEntryRoute(
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
-            val message = when (event) {
+            when (event) {
                 is AddEntryEvent.Saved -> {
                     val template = when {
                         event.recurring -> savedRecurring
                         event.type == EntryType.EXPENSE -> savedExpense
                         else -> savedIncome
                     }
-                    template.format(Money.format(event.amountMinor))
+                    snackbarHostState.showMessage(template.format(Money.format(event.amountMinor)))
                 }
 
-                is AddEntryEvent.SaveFailed -> saveFailed
+                // Editing and deleting both finish the job the screen was opened for, so
+                // they close it. The confirmation belongs on the list the user lands back
+                // on, not on a screen that is about to disappear.
+                is AddEntryEvent.Updated, is AddEntryEvent.Deleted -> onBack()
+
+                is AddEntryEvent.SaveFailed -> snackbarHostState.showMessage(saveFailed)
             }
-            snackbarHostState.showMessage(message)
         }
     }
 
@@ -111,6 +117,9 @@ fun AddEntryRoute(
         onNoteChange = viewModel::setNote,
         onSave = viewModel::save,
         onFrequencyChange = viewModel::setFrequency,
+        onDeleteRequest = viewModel::requestDelete,
+        onDeleteCancel = viewModel::cancelDelete,
+        onDeleteConfirm = viewModel::confirmDelete,
         onBack = onBack,
         modifier = modifier,
     )
@@ -130,6 +139,9 @@ fun AddEntryScreen(
     onNoteChange: (String) -> Unit,
     onSave: () -> Unit,
     onFrequencyChange: (RecurringFrequency?) -> Unit,
+    onDeleteRequest: () -> Unit = {},
+    onDeleteCancel: () -> Unit = {},
+    onDeleteConfirm: () -> Unit = {},
     onBack: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -137,7 +149,23 @@ fun AddEntryScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.add_title)) },
+                title = {
+                    Text(
+                        stringResource(
+                            if (state.isEditing) R.string.add_title_edit else R.string.add_title
+                        )
+                    )
+                },
+                actions = {
+                    if (state.isEditing) {
+                        IconButton(onClick = onDeleteRequest) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = stringResource(R.string.delete),
+                            )
+                        }
+                    }
+                },
                 navigationIcon = {
                     if (onBack != null) {
                         IconButton(onClick = onBack) {
@@ -159,7 +187,11 @@ fun AddEntryScreen(
                 .padding(horizontal = Spacing.lg, vertical = Spacing.lg),
             verticalArrangement = Arrangement.spacedBy(Spacing.xl),
         ) {
-            EntryTypeSelector(selected = state.type, onSelect = onTypeChange)
+            // Hidden while editing: an entry does not move between tables, and offering
+            // the switch would imply it could.
+            if (!state.isEditing) {
+                EntryTypeSelector(selected = state.type, onSelect = onTypeChange)
+            }
 
             AmountField(
                 value = state.amountInput,
@@ -192,7 +224,9 @@ fun AddEntryScreen(
                 )
             }
 
-            RepeatPicker(selected = state.frequency, onSelect = onFrequencyChange)
+            if (state.repeatAvailable) {
+                RepeatPicker(selected = state.frequency, onSelect = onFrequencyChange)
+            }
 
             OutlinedTextField(
                 value = state.note,
@@ -211,9 +245,32 @@ fun AddEntryScreen(
                     .fillMaxWidth()
                     .heightIn(min = MinTouchTarget),
             ) {
-                Text(stringResource(R.string.add_save))
+                Text(
+                    stringResource(
+                        if (state.isEditing) R.string.add_save_changes else R.string.add_save
+                    )
+                )
             }
         }
+    }
+
+    if (state.deleteRequested) {
+        AlertDialog(
+            onDismissRequest = onDeleteCancel,
+            title = { Text(stringResource(R.string.history_delete_title)) },
+            text = { Text(stringResource(R.string.add_delete_message)) },
+            confirmButton = {
+                TextButton(onClick = onDeleteConfirm) {
+                    Text(
+                        text = stringResource(R.string.delete),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDeleteCancel) { Text(stringResource(R.string.cancel)) }
+            },
+        )
     }
 }
 

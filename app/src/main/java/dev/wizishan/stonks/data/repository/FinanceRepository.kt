@@ -340,6 +340,61 @@ class FinanceRepository(
     suspend fun addTrip(name: String, startDate: LocalDate? = null, endDate: LocalDate? = null): Long =
         tripDao.insert(Trip(name = name.trim(), startDate = startDate, endDate = endDate))
 
+    suspend fun updateExpense(
+        id: Long,
+        amountMinor: Long,
+        date: LocalDate,
+        categoryId: Long,
+        tripId: Long? = null,
+        note: String? = null,
+    ) {
+        val existing = expenseDao.getById(id) ?: return
+        expenseDao.update(
+            existing.copy(
+                amountMinor = amountMinor,
+                date = date,
+                categoryId = categoryId,
+                tripId = tripId,
+                note = note?.takeIf { it.isNotBlank() },
+            )
+        )
+    }
+
+    /**
+     * Editing keeps `recurringRuleId` — [existing.copy] carries it over rather than
+     * clearing it. A generated entry someone corrected is still the entry that rule
+     * generated, and losing that would let the rule create a duplicate for the same date.
+     */
+    suspend fun updateIncome(
+        id: Long,
+        amountMinor: Long,
+        date: LocalDate,
+        source: String,
+        note: String? = null,
+    ) {
+        val existing = incomeDao.getById(id) ?: return
+        incomeDao.update(
+            existing.copy(
+                amountMinor = amountMinor,
+                date = date,
+                source = source.trim(),
+                note = note?.takeIf { it.isNotBlank() },
+            )
+        )
+    }
+
+    suspend fun getExpense(id: Long): Expense? = expenseDao.getById(id)
+
+    suspend fun getIncome(id: Long): Income? = incomeDao.getById(id)
+
+    suspend fun deleteExpense(id: Long) {
+        expenseDao.getById(id)?.let { expenseDao.delete(it) }
+    }
+
+    suspend fun deleteIncome(id: Long) {
+        incomeDao.getById(id)?.let { incomeDao.delete(it) }
+    }
+
     /**
      * Remove one History row, whichever table it came from.
      *

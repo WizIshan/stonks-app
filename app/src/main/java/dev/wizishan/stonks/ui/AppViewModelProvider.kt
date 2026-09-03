@@ -1,6 +1,7 @@
 package dev.wizishan.stonks.ui
 
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -18,7 +19,11 @@ object AppViewModelProvider {
     val Factory = viewModelFactory {
         initializer {
             val container = stonksApplication().container
-            AddEntryViewModel(container.repository, container.recurringGenerator)
+            AddEntryViewModel(
+                container.repository,
+                container.recurringGenerator,
+                createSavedStateHandle(),
+            )
         }
         initializer { HistoryViewModel(stonksApplication().container.repository) }
         initializer { DashboardViewModel(stonksApplication().container.repository) }

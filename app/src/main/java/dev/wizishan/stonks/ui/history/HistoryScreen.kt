@@ -1,6 +1,7 @@
 package dev.wizishan.stonks.ui.history
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -68,6 +69,7 @@ import java.time.format.FormatStyle
 @Composable
 fun HistoryRoute(
     onAddClick: () -> Unit,
+    onEditEntry: (HistoryItem) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HistoryViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
@@ -75,6 +77,7 @@ fun HistoryRoute(
     HistoryScreen(
         state = state,
         onAddClick = onAddClick,
+        onEditEntry = onEditEntry,
         onTypeChange = viewModel::setType,
         onCategoryChange = viewModel::setCategory,
         onTripChange = viewModel::setTrip,
@@ -93,6 +96,7 @@ fun HistoryRoute(
 fun HistoryScreen(
     state: HistoryUiState,
     onAddClick: () -> Unit,
+    onEditEntry: (HistoryItem) -> Unit,
     onTypeChange: (HistoryType) -> Unit,
     onCategoryChange: (Long?) -> Unit,
     onTripChange: (Long?) -> Unit,
@@ -159,7 +163,11 @@ fun HistoryScreen(
                     HorizontalDivider()
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(state.items, key = { it.rowKey }) { item ->
-                            SwipeableHistoryRow(item = item, onDeleteRequest = onDeleteRequest)
+                            SwipeableHistoryRow(
+                                item = item,
+                                onEdit = onEditEntry,
+                                onDeleteRequest = onDeleteRequest,
+                            )
                             HorizontalDivider()
                         }
                     }
@@ -188,6 +196,7 @@ fun HistoryScreen(
 @Composable
 private fun SwipeableHistoryRow(
     item: HistoryItem,
+    onEdit: (HistoryItem) -> Unit,
     onDeleteRequest: (HistoryItem) -> Unit,
 ) {
     val dismissState = rememberSwipeToDismissBoxState(
@@ -196,12 +205,21 @@ private fun SwipeableHistoryRow(
             false
         }
     )
+    val openLabel = stringResource(R.string.history_open_entry)
 
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = { DeleteSwipeBackground() },
     ) {
-        HistoryRow(item)
+        HistoryRow(
+            item = item,
+            modifier = Modifier
+                // The swipe layer sits behind this row, so the row must be opaque.
+                // Without a background it shows through and every row looks permanently
+                // swiped — with a "Delete" label that is scenery, not a button.
+                .background(MaterialTheme.colorScheme.surface)
+                .clickable(onClickLabel = openLabel) { onEdit(item) },
+        )
     }
 }
 
@@ -209,7 +227,7 @@ private fun SwipeableHistoryRow(
 private fun DeleteSwipeBackground() {
     Box(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .background(MaterialTheme.colorScheme.errorContainer)
             .padding(horizontal = Spacing.lg, vertical = Spacing.md),
         contentAlignment = Alignment.CenterEnd,
@@ -399,12 +417,12 @@ private fun SortMenu(
 }
 
 @Composable
-private fun HistoryRow(item: HistoryItem) {
+private fun HistoryRow(item: HistoryItem, modifier: Modifier = Modifier) {
     val formatter = remember { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM) }
     val incomeLabel = stringResource(R.string.history_income_label)
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = Spacing.lg, vertical = Spacing.md),
         horizontalArrangement = Arrangement.spacedBy(Spacing.md),
@@ -528,7 +546,7 @@ private fun HistoryPreview() {
                 loading = false,
             ),
             onAddClick = {}, onTypeChange = {}, onCategoryChange = {}, onTripChange = {},
-            onPeriodChange = {}, onSortChange = {}, onClearFilters = {},
+            onEditEntry = {}, onPeriodChange = {}, onSortChange = {}, onClearFilters = {},
             onDeleteRequest = {}, onDeleteCancel = {}, onDeleteConfirm = {},
         )
     }
@@ -541,7 +559,7 @@ private fun HistoryEmptyPreview() {
         HistoryScreen(
             state = HistoryUiState(loading = false),
             onAddClick = {}, onTypeChange = {}, onCategoryChange = {}, onTripChange = {},
-            onPeriodChange = {}, onSortChange = {}, onClearFilters = {},
+            onEditEntry = {}, onPeriodChange = {}, onSortChange = {}, onClearFilters = {},
             onDeleteRequest = {}, onDeleteCancel = {}, onDeleteConfirm = {},
         )
     }
@@ -557,7 +575,7 @@ private fun HistoryNoMatchesPreview() {
                 loading = false,
             ),
             onAddClick = {}, onTypeChange = {}, onCategoryChange = {}, onTripChange = {},
-            onPeriodChange = {}, onSortChange = {}, onClearFilters = {},
+            onEditEntry = {}, onPeriodChange = {}, onSortChange = {}, onClearFilters = {},
             onDeleteRequest = {}, onDeleteCancel = {}, onDeleteConfirm = {},
         )
     }

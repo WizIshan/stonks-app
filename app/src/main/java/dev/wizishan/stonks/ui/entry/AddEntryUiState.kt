@@ -27,8 +27,13 @@ data class AddEntryUiState(
     val categories: List<Category> = emptyList(),
     val trips: List<Trip> = emptyList(),
     val knownSources: List<String> = emptyList(),
-    /** Errors stay hidden until the first save attempt, so an empty form isn't shouting. */
+    /**
+     * Set when an existing entry is open for correction rather than a new one being added.
+     */
+    val editingId: Long? = null,
+    /** Errors stay hidden until the first save attempt, so an empty form is not shouting. */
     val validationVisible: Boolean = false,
+    val deleteRequested: Boolean = false,
     val saving: Boolean = false,
 ) {
 
@@ -38,6 +43,17 @@ data class AddEntryUiState(
     val isExpense: Boolean get() = type == EntryType.EXPENSE
 
     val isRecurring: Boolean get() = frequency != null
+
+    val isEditing: Boolean get() = editingId != null
+
+    /**
+     * Repeat is only offered when adding.
+     *
+     * Turning an entry that already exists into a rule is ambiguous — is the entry the
+     * first occurrence, or a separate one-off that now also repeats? Rules are created
+     * from a new entry and managed on the Repeating screen.
+     */
+    val repeatAvailable: Boolean get() = !isEditing
 
     val amountError: AmountError? = when {
         amountInput.isBlank() -> AmountError.MISSING

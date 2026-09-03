@@ -28,6 +28,12 @@
     <string name="add_repeat_monthly">Monthly</string>
     <string name="add_repeat_hint">Entries are created automatically on schedule.</string>
     <string name="add_save">Save</string>
+    <string name="add_title_edit">Edit entry</string>
+    <string name="add_save_changes">Save changes</string>
+    <string name="add_updated">Entry updated</string>
+    <string name="add_delete_message">This entry will be removed. This cannot be undone.</string>
+    <string name="add_deleted">Entry deleted</string>
+    <string name="history_open_entry">Edit this entry</string>
     <string name="add_saved_recurring">Repeating entry set up · %1$s</string>
     <string name="add_saved_expense">Expense saved · %1$s</string>
     <string name="add_saved_income">Income saved · %1$s</string>

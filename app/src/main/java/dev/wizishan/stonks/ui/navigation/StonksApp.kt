@@ -28,7 +28,12 @@ import androidx.navigation.compose.rememberNavController
 import dev.wizishan.stonks.R
 import dev.wizishan.stonks.ui.budget.BudgetRoute
 import dev.wizishan.stonks.ui.dashboard.DashboardRoute
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import dev.wizishan.stonks.data.repository.HistoryItem
 import dev.wizishan.stonks.ui.entry.AddEntryRoute
+import dev.wizishan.stonks.ui.entry.AddEntryViewModel
+import dev.wizishan.stonks.ui.entry.EntryType
 import dev.wizishan.stonks.ui.history.HistoryRoute
 import dev.wizishan.stonks.ui.settings.SettingsRoute
 import dev.wizishan.stonks.ui.recurring.RecurringRoute
@@ -38,7 +43,19 @@ object Routes {
     const val HISTORY = "history"
     const val BUDGETS = "budgets"
     const val SETTINGS = "settings"
-    const val ADD = "add"
+    /**
+     * One route for adding and editing. With no arguments it is a blank form; with an id
+     * and a type it opens that row for correction. The type is on the route because the
+     * two tables both number from 1, so an id alone is ambiguous.
+     */
+    const val ENTRY = "entry?entryId={entryId}&entryType={entryType}"
+
+    fun addEntry(): String = "entry"
+
+    fun editEntry(item: HistoryItem): String {
+        val type = if (item is HistoryItem.ExpenseItem) EntryType.EXPENSE else EntryType.INCOME
+        return "entry?entryId=${item.id}&entryType=${type.name}"
+    }
     const val RECURRING = "recurring"
 }
 
@@ -104,12 +121,15 @@ fun StonksApp(
         ) {
             composable(Routes.DASHBOARD) {
                 DashboardRoute(
-                    onAddClick = { navController.navigate(Routes.ADD) },
+                    onAddClick = { navController.navigate(Routes.addEntry()) },
                     onRecurringClick = { navController.navigate(Routes.RECURRING) },
                 )
             }
             composable(Routes.HISTORY) {
-                HistoryRoute(onAddClick = { navController.navigate(Routes.ADD) })
+                HistoryRoute(
+                    onAddClick = { navController.navigate(Routes.addEntry()) },
+                    onEditEntry = { navController.navigate(Routes.editEntry(it)) },
+                )
             }
             composable(Routes.BUDGETS) {
                 BudgetRoute()
@@ -117,7 +137,19 @@ fun StonksApp(
             composable(Routes.SETTINGS) {
                 SettingsRoute()
             }
-            composable(Routes.ADD) {
+            composable(
+                route = Routes.ENTRY,
+                arguments = listOf(
+                    navArgument(AddEntryViewModel.ENTRY_ID_ARG) {
+                        type = NavType.LongType
+                        defaultValue = -1L
+                    },
+                    navArgument(AddEntryViewModel.ENTRY_TYPE_ARG) {
+                        type = NavType.StringType
+                        defaultValue = EntryType.EXPENSE.name
+                    },
+                ),
+            ) {
                 AddEntryRoute(onBack = { navController.popBackStack() })
             }
             composable(Routes.RECURRING) {
