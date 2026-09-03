@@ -31,6 +31,15 @@ interface RecurringRuleDao {
     @Query("SELECT COUNT(*) FROM recurring_rules WHERE isActive = 1")
     suspend fun activeCount(): Int
 
+    @Query("SELECT * FROM recurring_rules")
+    suspend fun getAll(): List<RecurringRule>
+
+    @Query("DELETE FROM recurring_rules")
+    suspend fun deleteAll()
+
+    @Insert
+    suspend fun insertAll(rules: List<RecurringRule>)
+
     @Insert
     suspend fun insert(rule: RecurringRule): Long
 

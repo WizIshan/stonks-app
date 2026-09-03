@@ -2,6 +2,8 @@ package dev.wizishan.stonks
 
 import android.app.Application
 import android.content.Context
+import dev.wizishan.stonks.data.backup.BackupFiles
+import dev.wizishan.stonks.data.backup.BackupManager
 import dev.wizishan.stonks.data.budget.BudgetChecker
 import dev.wizishan.stonks.data.budget.BudgetNotifier
 import dev.wizishan.stonks.data.local.StonksDatabase
@@ -36,6 +38,10 @@ class AppContainer(context: Context) {
     }
 
     val recurringGenerator: RecurringGenerator by lazy { RecurringGenerator(database) }
+
+    val backupManager: BackupManager by lazy { BackupManager(database) }
+
+    val backupFiles: BackupFiles by lazy { BackupFiles(context.applicationContext) }
 
     val budgetNotifier: BudgetNotifier by lazy { BudgetNotifier(context.applicationContext) }
 

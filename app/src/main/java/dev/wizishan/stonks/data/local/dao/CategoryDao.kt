@@ -28,11 +28,20 @@ interface CategoryDao {
     @Query("SELECT COUNT(*) FROM categories")
     suspend fun count(): Int
 
+    @Query("SELECT * FROM categories")
+    suspend fun getAll(): List<Category>
+
+    @Query("DELETE FROM categories")
+    suspend fun deleteAll()
+
     @Insert
     suspend fun insert(category: Category): Long
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertAll(categories: List<Category>): List<Long>
+
+    @Insert
+    suspend fun insertAllKeepingIds(categories: List<Category>)
 
     @Update
     suspend fun update(category: Category)

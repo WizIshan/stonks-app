@@ -129,11 +129,20 @@ interface ExpenseDao {
 
     // ---- writes ------------------------------------------------------------------
 
+    @Query("SELECT * FROM expenses")
+    suspend fun getAll(): List<Expense>
+
+    @Query("DELETE FROM expenses")
+    suspend fun deleteAll()
+
     @Insert
     suspend fun insert(expense: Expense): Long
 
     @Insert
     suspend fun insertAll(expenses: List<Expense>): List<Long>
+
+    @Insert
+    suspend fun insertAllKeepingIds(expenses: List<Expense>)
 
     @Update
     suspend fun update(expense: Expense)

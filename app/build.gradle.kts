@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -72,6 +73,9 @@ dependencies {
 
     // Recurring transactions + budget alerts
     implementation(libs.androidx.work.runtime.ktx)
+
+    // Backup format
+    implementation(libs.kotlinx.serialization.json)
 
 
     // Local JVM tests (Room DAOs run under Robolectric — no emulator)

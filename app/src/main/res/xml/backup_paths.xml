@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Exports live in the cache directory, so the OS can reclaim them and the app
+         never needs a storage permission. -->
+    <cache-path name="backups" path="backups/" />
+</paths>

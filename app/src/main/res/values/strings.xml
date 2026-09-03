@@ -122,4 +122,25 @@
     <string name="budget_alert_over_title">%1$s budget exceeded</string>
     <string name="budget_alert_body">%1$s of %2$s spent this month</string>
     <string name="dashboard_budgets">Budgets</string>
+    <!-- Settings / backup -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_backup_section">Backup</string>
+    <string name="settings_export">Export a backup</string>
+    <string name="settings_export_description">Saves everything to a JSON file and opens the share sheet, so you can keep it in Drive, email it to yourself, or copy it off by USB.</string>
+    <string name="settings_import">Restore from a backup</string>
+    <string name="settings_import_description">Replaces everything currently in the app with the contents of the file.</string>
+    <string name="settings_share_title">Share your Stonks backup</string>
+    <string name="settings_format_version">Backup format version %1$d</string>
+    <string name="settings_exported">Backup ready to share</string>
+    <string name="settings_export_failed">Could not write the backup</string>
+    <string name="settings_imported">Restored %1$d entries, %2$d categories</string>
+    <string name="settings_restore_title">Replace everything?</string>
+    <string name="settings_restore_message">Restoring overwrites every expense, income entry, category, trip, budget and repeating rule currently in the app. This cannot be undone.</string>
+    <string name="settings_restore_confirm">Replace</string>
+    <string name="settings_import_failed_not_json">That file could not be read</string>
+    <string name="settings_import_failed_not_json_detail">It is not a Stonks backup.</string>
+    <string name="settings_import_failed_version">Backup is from a newer version</string>
+    <string name="settings_import_failed_version_detail">This file is format version %1$d and this app understands version %2$d. Update the app and try again.</string>
+    <string name="settings_import_failed_invalid">That backup is incomplete</string>
+    <string name="settings_import_failed_invalid_detail">%1$s. Nothing was changed.</string>
 </resources>

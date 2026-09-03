@@ -20,6 +20,15 @@ interface TripDao {
     @Query("SELECT * FROM trips WHERE name = :name COLLATE NOCASE LIMIT 1")
     suspend fun getByName(name: String): Trip?
 
+    @Query("SELECT * FROM trips")
+    suspend fun getAll(): List<Trip>
+
+    @Query("DELETE FROM trips")
+    suspend fun deleteAll()
+
+    @Insert
+    suspend fun insertAll(trips: List<Trip>)
+
     @Insert
     suspend fun insert(trip: Trip): Long
 

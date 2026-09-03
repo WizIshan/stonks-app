@@ -28,6 +28,12 @@ interface BudgetDao {
     @Query("SELECT * FROM budgets WHERE categoryId IS :categoryId")
     suspend fun getForCategory(categoryId: Long?): Budget?
 
+    @Query("DELETE FROM budgets")
+    suspend fun deleteAll()
+
+    @Insert
+    suspend fun insertAll(budgets: List<Budget>)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(budget: Budget): Long
 

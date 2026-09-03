@@ -70,11 +70,20 @@ interface IncomeDao {
 
     // ---- writes ------------------------------------------------------------------
 
+    @Query("SELECT * FROM income")
+    suspend fun getAll(): List<Income>
+
+    @Query("DELETE FROM income")
+    suspend fun deleteAll()
+
     @Insert
     suspend fun insert(income: Income): Long
 
     @Insert
     suspend fun insertAll(income: List<Income>): List<Long>
+
+    @Insert
+    suspend fun insertAllKeepingIds(income: List<Income>)
 
     @Update
     suspend fun update(income: Income)
