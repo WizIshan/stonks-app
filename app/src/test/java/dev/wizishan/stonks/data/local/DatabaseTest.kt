@@ -13,6 +13,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.LocalDate
+import java.util.concurrent.Executor
 
 /**
  * The Android API level these tests run against.
@@ -41,9 +42,17 @@ abstract class DatabaseTest {
     @Before
     fun createDb() {
         val context = ApplicationProvider.getApplicationContext<Context>()
+        // Run Room on the calling thread. By default queries and invalidation callbacks
+        // hop to a background executor, so a DAO write and the Flow emission it triggers
+        // land after the test has already asserted. A direct executor makes both
+        // synchronous, which is what lets these tests read a value straight back.
+        val directExecutor = Executor(Runnable::run)
+
         db = Room.inMemoryDatabaseBuilder(context, StonksDatabase::class.java)
             .addCallback(StonksDatabase.SeedCallback)
             .allowMainThreadQueries()
+            .setQueryExecutor(directExecutor)
+            .setTransactionExecutor(directExecutor)
             .build()
     }
 

@@ -1,3 +1,34 @@
 <resources>
     <string name="app_name">Stonks</string>
+
+    <!-- Add entry screen -->
+    <string name="add_title">Add</string>
+    <string name="add_type_expense">Expense</string>
+    <string name="add_type_income">Income</string>
+    <string name="add_amount_label">Amount</string>
+    <string name="add_amount_error_missing">Enter an amount</string>
+    <string name="add_amount_error_unreadable">That is not an amount we can read — try 12.50</string>
+    <string name="add_amount_error_not_positive">Amount must be more than zero</string>
+    <string name="add_date_label">Date</string>
+    <string name="add_date_pick">Pick a date</string>
+    <string name="add_category_label">Category</string>
+    <string name="add_category_error">Pick a category</string>
+    <string name="add_trip_label">Trip</string>
+    <string name="add_trip_none">No trip</string>
+    <string name="add_trip_hint">Optional — groups travel spend separately</string>
+    <string name="add_source_label">Source</string>
+    <string name="add_source_hint">Salary, Freelance, a refund…</string>
+    <string name="add_source_error">Say where this came from</string>
+    <string name="add_note_label">Note</string>
+    <string name="add_note_hint">Optional</string>
+    <string name="add_save">Save</string>
+    <string name="add_saved_expense">Expense saved · %1$s</string>
+    <string name="add_saved_income">Income saved · %1$s</string>
+    <string name="add_save_failed">Could not save that entry</string>
+    <string name="add_no_categories">No categories yet</string>
+
+    <!-- Shared -->
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="dismiss">Dismiss</string>
 </resources>

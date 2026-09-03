@@ -43,48 +43,31 @@ Consult DESIGN.md §4 — the forms are already decided. In short:
 
 Chart text wears `onSurface`/`onSurfaceVariant`, never the series color.
 
-## Token files (create these once, then only ever add to them)
+## The tokens — these already exist; use them, don't re-declare them
 
-```kotlin
-// ui/theme/Spacing.kt
-object Spacing {
-    val xs = 4.dp; val sm = 8.dp; val md = 12.dp
-    val lg = 16.dp; val xl = 24.dp; val xxl = 32.dp
-}
+| What | Where | How you use it |
+|---|---|---|
+| Spacing, radii, touch target | `ui/theme/Spacing.kt` | `Spacing.lg`, `Radius.card`, `MinTouchTarget` |
+| Category colours | `ui/theme/CategoryPalette.kt` | `CategoryPalette.resolve(category.colorHex)` |
+| Status + diverging | `ui/theme/StatusColors.kt` | `StatusColors.warning`, `DivergingColors.forAmount(net)` |
+| Which surface we're on | `ui/theme/Theme.kt` | `LocalIsDarkTheme.current` — not `isSystemInDarkTheme()` |
+| Money formatting | `core/Money.kt` | `Money.format(minor)`, `Money.formatSigned(net)` |
 
-// ui/theme/CategoryPalette.kt — fixed slot order; index = slot - 1
-object CategoryPalette {
-    val light = listOf(
-        Color(0xFF2A78D6), Color(0xFFEB6834), Color(0xFF1BAF7A), Color(0xFFEDA100),
-        Color(0xFFE87BA4), Color(0xFF008300), Color(0xFF4A3AA7), Color(0xFFE34948),
-    )
-    val dark = listOf(
-        Color(0xFF3987E5), Color(0xFFD95926), Color(0xFF199E70), Color(0xFFC98500),
-        Color(0xFFD55181), Color(0xFF008300), Color(0xFF9085E9), Color(0xFFE66767),
-    )
-    val otherLight = Color(0xFF898781)   // reserved for the "Other" fold bucket
-    val otherDark  = Color(0xFF898781)
+The palette itself lives in `core/CategorySlots.kt` as plain Kotlin, so the data layer
+can seed and assign slots without depending on Compose. `CategoryPalette` is only the
+Compose adapter over it. **Never hardcode a slot hex in a composable** — resolve the
+one stored on the row.
 
-    /** Resolve a stored hex to the step for the current mode. */
-    @Composable fun forCategory(colorHex: String): Color { /* map hex -> slot -> mode step */ }
-}
+Amounts are `Long` minor units everywhere (8250 == €82.50). Never format one by hand,
+and never convert to `Double` except for chart geometry.
 
-// ui/theme/StatusColors.kt — reserved; never used as a series color
-object StatusColors {
-    val good     = Color(0xFF0CA30C)
-    val warning  = Color(0xFFFAB219)
-    val serious  = Color(0xFFEC835A)
-    val critical = Color(0xFFD03B3B)
-}
-```
-
-Status colors always ship with an icon **and** text — never color alone.
+Status colours always ship with an icon **and** text — never colour alone.
 
 ## Assigning a color to a new category
 
-Take the next unused slot in order (1 → 8). Past slot 8, let the user pick an existing
-slot; duplicates are acceptable because categories are always name-labeled. Never
-generate a new hue, never randomize, never assign the reserved gray.
+`CategorySlots.nextFree(categoryDao.usedColorHexes())`. Past slot 8 it returns null and
+the user picks an existing slot; duplicates are acceptable because categories are always
+name-labeled. Never generate a new hue, never randomize, never assign the reserved gray.
 
 ## If you change any palette hex
 

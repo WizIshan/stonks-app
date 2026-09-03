@@ -42,6 +42,7 @@ Use `MaterialTheme.typography` only. **Never construct an ad-hoc `TextStyle` in 
 |---|---|---|
 | Top app bar title | `headlineSmall` | `onSurface` |
 | Dashboard hero figure (month total) | `displaySmall` | `onSurface` |
+| Amount entry field (the value being typed) | `headlineSmall` | `onSurface` |
 | Section header ("This month", "By category") | `titleMedium` | `onSurface` |
 | List row primary (category / source) | `bodyLarge` | `onSurface` |
 | List row secondary (date, note, trip) | `bodyMedium` | `onSurfaceVariant` |
