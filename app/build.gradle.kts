@@ -4,7 +4,7 @@ import java.util.Properties
  * Release signing details, kept out of the repository.
  *
  * Create `keystore.properties` next to this file (it is gitignored) with:
- *   storeFile=../stonks-release.jks
+ *   storeFile=stonks-release.jks
  *   storePassword=...
  *   keyAlias=stonks
  *   keyPassword=...

@@ -60,14 +60,14 @@ personal app — your name is fine. **Remember the password.**
 Create `app/keystore.properties`:
 
 ```
-storeFile=../stonks-release.jks
+storeFile=stonks-release.jks
 storePassword=your-password
 keyAlias=stonks
 keyPassword=your-password
 ```
 
-`storeFile` is relative to the repository root. Both passwords are the same unless you
-deliberately set a separate key password.
+`storeFile` is resolved from the repository root, which is where step 1 put the file.
+Both passwords are the same unless you deliberately set a separate key password.
 
 This file and `*.jks` are already in `.gitignore` — **they must never be committed.**
 Without this file the release build still assembles, it just comes out unsigned, so
