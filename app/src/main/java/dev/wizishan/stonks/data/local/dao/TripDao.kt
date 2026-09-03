@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import dev.wizishan.stonks.data.local.entity.Trip
+import dev.wizishan.stonks.data.local.query.TripUsage
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -22,6 +23,24 @@ interface TripDao {
 
     @Query("SELECT * FROM trips")
     suspend fun getAll(): List<Trip>
+
+    /**
+     * How many expenses each trip is holding.
+     *
+     * A correlated subquery rather than a join, so a trip with nothing tagged to it still
+     * comes back with a zero instead of dropping out of the list.
+     */
+    @Query(
+        """
+        SELECT t.id AS tripId,
+               (SELECT COUNT(*) FROM expenses e WHERE e.tripId = t.id) AS expenseCount
+        FROM trips t
+        """
+    )
+    fun observeUsage(): Flow<List<TripUsage>>
+
+    @Query("DELETE FROM trips WHERE id = :id")
+    suspend fun deleteById(id: Long)
 
     @Query("DELETE FROM trips")
     suspend fun deleteAll()

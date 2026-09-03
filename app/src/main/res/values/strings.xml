@@ -176,4 +176,34 @@
     <string name="categories_last_category">The last category cannot be deleted — every expense needs one.</string>
     <string name="categories_no_free_slot">All eight colours are in use. Pick one to share.</string>
     <string name="add_new_category">New category</string>
+    <!-- Trips -->
+    <string name="trips_title">Trips</string>
+    <string name="trips_manage_description">Group travel spend so it can be seen apart from everyday spending.</string>
+    <string name="trips_new">New trip</string>
+    <string name="trips_edit">Edit trip</string>
+    <string name="trips_name_label">Name</string>
+    <string name="trips_name_hint">Japan 2026</string>
+    <string name="trips_name_error">Give it a name</string>
+    <string name="trips_name_taken">There is already a trip with that name</string>
+    <string name="trips_start_label">Starts</string>
+    <string name="trips_end_label">Ends</string>
+    <string name="trips_date_any">Any date</string>
+    <string name="trips_date_clear">Clear</string>
+    <string name="trips_dates_inverted">The end date is before the start date</string>
+    <string name="trips_save">Save</string>
+    <string name="trips_usage_empty">Nothing tagged yet</string>
+    <string name="trips_usage_entries">%1$d entries</string>
+    <string name="trips_delete_title">Delete %1$s?</string>
+    <string name="trips_delete_message">Its %1$d entries are kept and simply stop being tagged to a trip.</string>
+    <string name="trips_delete_message_empty">Nothing is tagged to it.</string>
+    <string name="trips_empty_headline">No trips yet</string>
+    <string name="trips_empty_message">Group travel spend by creating a trip.</string>
+    <string name="add_new_trip">New trip</string>
+    <string name="categories_colour_custom">Custom</string>
+    <string name="categories_colour_hue">Hue</string>
+    <string name="categories_colour_saturation">Strength</string>
+    <string name="categories_colour_brightness">Brightness</string>
+    <string name="categories_colour_preview_light">Light</string>
+    <string name="categories_colour_preview_dark">Dark</string>
+    <string name="categories_colour_adapted">Shown as it will appear in each theme — lightness is adjusted so the colour stays legible on both.</string>
 </resources>

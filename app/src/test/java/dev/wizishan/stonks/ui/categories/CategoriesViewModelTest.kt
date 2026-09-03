@@ -145,9 +145,8 @@ class CategoriesViewModelTest : DatabaseTest() {
     }
 
     @Test
-    fun `all eight colours in use is reported, and one can still be shared`() = runTest(mainDispatcher) {
+    fun `a colour already in use can be shared`() = runTest(mainDispatcher) {
         subscribe()
-        assertTrue(viewModel.uiState.value.allSlotsUsed)
 
         viewModel.startNew()
         viewModel.setEditorName("Coffee")
@@ -157,6 +156,31 @@ class CategoriesViewModelTest : DatabaseTest() {
         // Duplicates are fine — a category is always name-labelled (DESIGN.md §3b).
         assertEquals("#2A78D6", rowNamed("Coffee").colorHex)
         assertEquals(9, viewModel.uiState.value.categories.size)
+    }
+
+    @Test
+    fun `any well-formed colour is accepted, not only the eight built in ones`() = runTest(mainDispatcher) {
+        subscribe()
+        viewModel.startNew()
+        viewModel.setEditorName("Coffee")
+
+        viewModel.setEditorColor("#7B4B2A")
+        viewModel.saveEditor()
+
+        assertEquals("#7B4B2A", rowNamed("Coffee").colorHex)
+    }
+
+    @Test
+    fun `a malformed colour is refused`() = runTest(mainDispatcher) {
+        subscribe()
+        viewModel.startNew()
+        viewModel.setEditorName("Coffee")
+
+        viewModel.setEditorColor("not-a-colour")
+        viewModel.saveEditor()
+
+        assertTrue(viewModel.uiState.value.editor?.validationVisible == true)
+        assertEquals(8, viewModel.uiState.value.categories.size)
     }
 
     @Test

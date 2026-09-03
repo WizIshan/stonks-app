@@ -50,6 +50,12 @@ data class MonthTotal(
     val totalMinor: Long,
 )
 
+/** How many expenses a trip is holding, so a delete can say what it will untag. */
+data class TripUsage(
+    val tripId: Long,
+    val expenseCount: Int,
+)
+
 /** What a category is carrying, so a delete can say what it will move. */
 data class CategoryUsage(
     val categoryId: Long,

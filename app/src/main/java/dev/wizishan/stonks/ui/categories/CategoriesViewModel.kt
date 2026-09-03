@@ -49,16 +49,6 @@ data class CategoriesUiState(
     val editor: CategoryEditor? = null,
     val pendingDelete: CategoryRow? = null,
 ) {
-    /**
-     * Whether every palette slot is already spoken for.
-     *
-     * Past eight, a new category picks a slot that is already in use rather than getting a
-     * generated hue — duplicates are fine because a category is always name-labelled
-     * (DESIGN.md §3b).
-     */
-    val allSlotsUsed: Boolean
-        get() = CategorySlots.nextFree(categories.map { it.colorHex }) == null
-
     /** Somewhere to move entries when a category is deleted. */
     fun reassignTargets(excluding: Long): List<CategoryRow> = categories.filter { it.id != excluding }
 
@@ -109,7 +99,12 @@ class CategoriesViewModel(
         initialValue = CategoriesUiState(),
     )
 
-    /** Opens the sheet pre-set to the next free slot, so the default keeps slot order. */
+    /**
+     * Opens the sheet on the next unused built-in colour.
+     *
+     * Any colour is allowed, but defaulting to a validated one means leaving the picker
+     * alone still produces a set that reads well together.
+     */
     fun startNew() {
         val used = uiState.value.categories.map { it.colorHex }
         val slot: CategorySlot = CategorySlots.nextFree(used) ?: CategorySlots.all.first()
@@ -136,7 +131,7 @@ class CategoriesViewModel(
 
         viewModelScope.launch {
             val result = if (current.id == null) {
-                repository.addCategoryOnSlot(current.name, current.colorHex)
+                repository.addCategoryWithColor(current.name, current.colorHex)
             } else {
                 repository.updateCategory(current.id, current.name, current.colorHex)
             }

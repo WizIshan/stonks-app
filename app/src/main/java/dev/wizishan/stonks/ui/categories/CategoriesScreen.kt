@@ -54,9 +54,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.wizishan.stonks.R
-import dev.wizishan.stonks.core.CategorySlots
 import dev.wizishan.stonks.ui.AppViewModelProvider
 import dev.wizishan.stonks.ui.components.ColorDot
+import dev.wizishan.stonks.ui.components.ColorPicker
 import dev.wizishan.stonks.ui.theme.CategoryPalette
 import dev.wizishan.stonks.ui.theme.Spacing
 import dev.wizishan.stonks.ui.theme.StonksTheme
@@ -158,7 +158,6 @@ fun CategoriesScreen(
     state.editor?.let { editor ->
         CategoryEditorSheet(
             editor = editor,
-            allSlotsUsed = state.allSlotsUsed,
             onName = onEditorName,
             onColor = onEditorColor,
             onSave = onEditorSave,
@@ -232,7 +231,6 @@ private fun CategoryRow.usageLine(): String {
 @Composable
 private fun CategoryEditorSheet(
     editor: CategoryEditor,
-    allSlotsUsed: Boolean,
     onName: (String) -> Unit,
     onColor: (String) -> Unit,
     onSave: () -> Unit,
@@ -280,27 +278,7 @@ private fun CategoryEditorSheet(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.md),
-                ) {
-                    CategorySlots.all.forEach { slot ->
-                        SlotSwatch(
-                            colorHex = slot.lightHex,
-                            selected = slot.lightHex.equals(editor.colorHex, ignoreCase = true),
-                            onClick = { onColor(slot.lightHex) },
-                        )
-                    }
-                }
-                // Only worth saying once the palette is full — before that, sharing a
-                // colour is a choice rather than the only option left.
-                if (allSlotsUsed && editor.isNew) {
-                    Text(
-                        text = stringResource(R.string.categories_colour_reused),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                ColorPicker(selectedHex = editor.colorHex, onSelect = onColor)
             }
 
             Button(
@@ -314,35 +292,6 @@ private fun CategoryEditorSheet(
     }
 }
 
-/**
- * A swatch big enough to tap.
- *
- * The tick is what says "selected", not the ring alone: three of the eight hues are below
- * 3:1 on the light surface, so a coloured outline around a coloured circle would be the
- * one distinction those hues cannot reliably carry (DESIGN.md §3b).
- */
-@Composable
-private fun SlotSwatch(colorHex: String, selected: Boolean, onClick: () -> Unit) {
-    val color: Color = CategoryPalette.resolve(colorHex)
-
-    Surface(
-        onClick = onClick,
-        shape = CircleShape,
-        color = color,
-        modifier = Modifier.size(SwatchSize),
-    ) {
-        if (selected) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.padding(Spacing.sm),
-            )
-        }
-    }
-}
-
-private val SwatchSize = 48.dp
 
 @Composable
 private fun DeleteCategoryDialog(

@@ -8,6 +8,7 @@ import dev.wizishan.stonks.data.local.entity.RecurringFrequency
 import dev.wizishan.stonks.data.recurring.RecurringGenerator
 import dev.wizishan.stonks.data.repository.AddCategoryResult
 import dev.wizishan.stonks.data.repository.FinanceRepository
+import dev.wizishan.stonks.data.repository.TripResult
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -211,6 +212,36 @@ class AddEntryViewModel(
                 }
 
                 AddCategoryResult.InvalidName -> _uiState.update { it.copy(newCategoryName = null) }
+            }
+        }
+    }
+
+    fun startNewTrip() = _uiState.update { it.copy(newTripName = "") }
+
+    fun setNewTripName(name: String) = _uiState.update { it.copy(newTripName = name) }
+
+    fun cancelNewTrip() = _uiState.update { it.copy(newTripName = null) }
+
+    /**
+     * Create a trip from the entry form and tag this entry to it.
+     *
+     * Dates are left unset — someone logging an expense knows the trip's name, not
+     * necessarily when it ends. They are editable on the Trips screen.
+     */
+    fun confirmNewTrip() {
+        val name = _uiState.value.newTripName?.trim().orEmpty()
+        if (name.isEmpty()) return
+
+        viewModelScope.launch {
+            when (val result = repository.addTripChecked(name)) {
+                is TripResult.Saved -> _uiState.update { it.copy(newTripName = null, tripId = result.id) }
+                // Already exists, which is what was wanted — select it.
+                TripResult.NameTaken -> {
+                    val existing = repository.findTripByName(name)
+                    _uiState.update { it.copy(newTripName = null, tripId = existing?.id ?: it.tripId) }
+                }
+
+                TripResult.InvalidName -> _uiState.update { it.copy(newTripName = null) }
             }
         }
     }

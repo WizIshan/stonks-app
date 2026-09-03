@@ -74,15 +74,24 @@ class FinanceRepositoryTest : DatabaseTest() {
 
     @Test
     fun `once slots run out the user can pick an existing one`() = runTest {
-        val result = repository.addCategoryOnSlot("Coffee", CategorySlots.all.first().lightHex)
+        val result = repository.addCategoryWithColor("Coffee", CategorySlots.all.first().lightHex)
 
         assertTrue(result is AddCategoryResult.Created)
         assertEquals("#2A78D6", db.categoryDao().getByName("Coffee")?.colorHex)
     }
 
     @Test
-    fun `a slot that is not in the palette is refused`() = runTest {
-        assertEquals(AddCategoryResult.InvalidName, repository.addCategoryOnSlot("Coffee", "#123456"))
+    fun `any well-formed colour is accepted, not only the built-in eight`() = runTest {
+        val result = repository.addCategoryWithColor("Coffee", "#123456")
+
+        assertTrue(result is AddCategoryResult.Created)
+        assertEquals("#123456", db.categoryDao().getByName("Coffee")?.colorHex)
+    }
+
+    @Test
+    fun `a malformed colour is refused`() = runTest {
+        assertEquals(AddCategoryResult.InvalidName, repository.addCategoryWithColor("Coffee", "nope"))
+        assertEquals(AddCategoryResult.InvalidName, repository.addCategoryWithColor("Coffee", "#FFF"))
     }
 
     @Test

@@ -37,6 +37,7 @@ import dev.wizishan.stonks.ui.entry.AddEntryViewModel
 import dev.wizishan.stonks.ui.entry.EntryType
 import dev.wizishan.stonks.ui.history.HistoryRoute
 import dev.wizishan.stonks.ui.settings.SettingsRoute
+import dev.wizishan.stonks.ui.trips.TripsRoute
 import dev.wizishan.stonks.ui.recurring.RecurringRoute
 
 object Routes {
@@ -59,6 +60,7 @@ object Routes {
     }
     const val RECURRING = "recurring"
     const val CATEGORIES = "categories"
+    const val TRIPS = "trips"
 }
 
 /**
@@ -137,10 +139,16 @@ fun StonksApp(
                 BudgetRoute()
             }
             composable(Routes.SETTINGS) {
-                SettingsRoute(onCategoriesClick = { navController.navigate(Routes.CATEGORIES) })
+                SettingsRoute(
+                    onCategoriesClick = { navController.navigate(Routes.CATEGORIES) },
+                    onTripsClick = { navController.navigate(Routes.TRIPS) },
+                )
             }
             composable(Routes.CATEGORIES) {
                 CategoriesRoute(onBack = { navController.popBackStack() })
+            }
+            composable(Routes.TRIPS) {
+                TripsRoute(onBack = { navController.popBackStack() })
             }
             composable(
                 route = Routes.ENTRY,

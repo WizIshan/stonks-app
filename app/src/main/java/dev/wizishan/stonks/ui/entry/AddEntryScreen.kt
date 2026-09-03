@@ -126,6 +126,10 @@ fun AddEntryRoute(
         onNewCategoryName = viewModel::setNewCategoryName,
         onNewCategoryConfirm = viewModel::confirmNewCategory,
         onNewCategoryCancel = viewModel::cancelNewCategory,
+        onNewTrip = viewModel::startNewTrip,
+        onNewTripName = viewModel::setNewTripName,
+        onNewTripConfirm = viewModel::confirmNewTrip,
+        onNewTripCancel = viewModel::cancelNewTrip,
         onDeleteRequest = viewModel::requestDelete,
         onDeleteCancel = viewModel::cancelDelete,
         onDeleteConfirm = viewModel::confirmDelete,
@@ -152,6 +156,10 @@ fun AddEntryScreen(
     onNewCategoryName: (String) -> Unit = {},
     onNewCategoryConfirm: () -> Unit = {},
     onNewCategoryCancel: () -> Unit = {},
+    onNewTrip: () -> Unit = {},
+    onNewTripName: (String) -> Unit = {},
+    onNewTripConfirm: () -> Unit = {},
+    onNewTripCancel: () -> Unit = {},
     onDeleteRequest: () -> Unit = {},
     onDeleteCancel: () -> Unit = {},
     onDeleteConfirm: () -> Unit = {},
@@ -222,13 +230,14 @@ fun AddEntryScreen(
                     onSelect = onCategoryChange,
                     onNewCategory = onNewCategory,
                 )
-                if (state.trips.isNotEmpty()) {
-                    TripPicker(
-                        trips = state.trips,
-                        selected = state.selectedTrip,
-                        onSelect = onTripChange,
-                    )
-                }
+                // Always shown, even with no trips yet: the chip inside it is the only
+                // way to make the first one, so hiding it hid the whole feature.
+                TripPicker(
+                    trips = state.trips,
+                    selected = state.selectedTrip,
+                    onSelect = onTripChange,
+                    onNewTrip = onNewTrip,
+                )
             } else {
                 SourceField(
                     value = state.source,
@@ -269,11 +278,24 @@ fun AddEntryScreen(
     }
 
     if (state.newCategoryName != null) {
-        NewCategoryDialog(
+        NameDialog(
+            title = stringResource(R.string.add_new_category),
+            label = stringResource(R.string.categories_name_label),
             name = state.newCategoryName,
             onNameChange = onNewCategoryName,
             onConfirm = onNewCategoryConfirm,
             onDismiss = onNewCategoryCancel,
+        )
+    }
+
+    if (state.newTripName != null) {
+        NameDialog(
+            title = stringResource(R.string.add_new_trip),
+            label = stringResource(R.string.trips_name_label),
+            name = state.newTripName,
+            onNameChange = onNewTripName,
+            onConfirm = onNewTripConfirm,
+            onDismiss = onNewTripCancel,
         )
     }
 
@@ -320,8 +342,11 @@ private fun EntryTypeSelector(
     }
 }
 
+/** One naming prompt, shared by the new-category and new-trip chips. */
 @Composable
-private fun NewCategoryDialog(
+private fun NameDialog(
+    title: String,
+    label: String,
     name: String,
     onNameChange: (String) -> Unit,
     onConfirm: () -> Unit,
@@ -329,12 +354,12 @@ private fun NewCategoryDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.add_new_category)) },
+        title = { Text(title) },
         text = {
             OutlinedTextField(
                 value = name,
                 onValueChange = onNameChange,
-                label = { Text(stringResource(R.string.categories_name_label)) },
+                label = { Text(label) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 modifier = Modifier.fillMaxWidth(),
@@ -532,6 +557,7 @@ private fun TripPicker(
     trips: List<Trip>,
     selected: Trip?,
     onSelect: (Long?) -> Unit,
+    onNewTrip: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
         Text(
@@ -560,6 +586,17 @@ private fun TripPicker(
                     label = { Text(trip.name) },
                 )
             }
+            AssistChip(
+                onClick = onNewTrip,
+                label = { Text(stringResource(R.string.add_new_trip)) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(Spacing.lg),
+                    )
+                },
+            )
         }
     }
 }

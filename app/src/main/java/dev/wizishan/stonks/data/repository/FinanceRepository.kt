@@ -1,6 +1,7 @@
 package dev.wizishan.stonks.data.repository
 
 import dev.wizishan.stonks.core.CategorySlots
+import dev.wizishan.stonks.core.ColorMath
 import dev.wizishan.stonks.data.budget.BudgetChecker
 import dev.wizishan.stonks.data.budget.BudgetProgress
 import dev.wizishan.stonks.data.local.dao.BudgetDao
@@ -18,6 +19,7 @@ import dev.wizishan.stonks.data.local.entity.RecurringRule
 import dev.wizishan.stonks.data.local.entity.RecurringType
 import dev.wizishan.stonks.data.local.entity.Trip
 import dev.wizishan.stonks.data.local.query.CategoryUsage
+import dev.wizishan.stonks.data.local.query.TripUsage
 import dev.wizishan.stonks.data.local.query.ExpenseListItem
 import dev.wizishan.stonks.data.local.query.HistorySort
 import dev.wizishan.stonks.data.local.query.IncomeListItem
@@ -59,7 +61,11 @@ class FinanceRepository(
 
     fun observeCategoryUsage(): Flow<List<CategoryUsage>> = categoryDao.observeUsage()
 
+    fun observeTripUsage(): Flow<List<TripUsage>> = tripDao.observeUsage()
+
     suspend fun findCategoryByName(name: String): Category? = categoryDao.getByName(name.trim())
+
+    suspend fun findTripByName(name: String): Trip? = tripDao.getByName(name.trim())
 
     /**
      * Every budget with this month's spend against it.
@@ -243,14 +249,21 @@ class FinanceRepository(
         )
     }
 
-    /** Create a category on a slot the user chose, once the eight are used up. */
-    suspend fun addCategoryOnSlot(name: String, colorHex: String): AddCategoryResult {
+    /**
+      * Create a category in a colour the user chose.
+      *
+      * Any well-formed hex is accepted, not only the eight built-in slots. What keeps that
+      * safe is that a category is always name-labelled, so colour reinforces identity
+      * rather than carrying it, and that rendering adapts the lightness per surface —
+      * see [dev.wizishan.stonks.ui.theme.CategoryPalette].
+      */
+    suspend fun addCategoryWithColor(name: String, colorHex: String): AddCategoryResult {
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return AddCategoryResult.InvalidName
+        if (!ColorMath.isValidHex(colorHex)) return AddCategoryResult.InvalidName
         if (categoryDao.getByName(trimmed) != null) return AddCategoryResult.NameTaken
-        if (CategorySlots.forHex(colorHex) == null) return AddCategoryResult.InvalidName
         return AddCategoryResult.Created(
-            categoryDao.insert(Category(name = trimmed, colorHex = colorHex))
+            categoryDao.insert(Category(name = trimmed, colorHex = colorHex.uppercase()))
         )
     }
 
@@ -348,6 +361,42 @@ class FinanceRepository(
         budgetDao.getById(budgetId)?.let { budgetDao.delete(it) }
     }
 
+    /** Rename a trip or change its dates. */
+    suspend fun updateTrip(
+        id: Long,
+        name: String,
+        startDate: LocalDate? = null,
+        endDate: LocalDate? = null,
+    ): TripResult {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return TripResult.InvalidName
+        val clash = tripDao.getByName(trimmed)
+        if (clash != null && clash.id != id) return TripResult.NameTaken
+        val existing = tripDao.getById(id) ?: return TripResult.InvalidName
+        tripDao.update(existing.copy(name = trimmed, startDate = startDate, endDate = endDate))
+        return TripResult.Saved(id)
+    }
+
+    /**
+     * Remove a trip.
+     *
+     * No reassignment step, unlike a category: the foreign key is SET_NULL, so the trip's
+     * expenses simply stop being tagged and stay as ordinary spend. A trip is a grouping,
+     * not something an expense needs one of.
+     */
+    suspend fun deleteTrip(id: Long) = tripDao.deleteById(id)
+
+    suspend fun addTripChecked(
+        name: String,
+        startDate: LocalDate? = null,
+        endDate: LocalDate? = null,
+    ): TripResult {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return TripResult.InvalidName
+        if (tripDao.getByName(trimmed) != null) return TripResult.NameTaken
+        return TripResult.Saved(addTrip(trimmed, startDate, endDate))
+    }
+
     suspend fun addTrip(name: String, startDate: LocalDate? = null, endDate: LocalDate? = null): Long =
         tripDao.insert(Trip(name = name.trim(), startDate = startDate, endDate = endDate))
 
@@ -432,13 +481,13 @@ class FinanceRepository(
     ): AddCategoryResult {
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return AddCategoryResult.InvalidName
-        if (CategorySlots.forHex(colorHex) == null) return AddCategoryResult.InvalidName
+        if (!ColorMath.isValidHex(colorHex)) return AddCategoryResult.InvalidName
 
         val clash = categoryDao.getByName(trimmed)
         if (clash != null && clash.id != id) return AddCategoryResult.NameTaken
 
         val existing = categoryDao.getById(id) ?: return AddCategoryResult.InvalidName
-        categoryDao.update(existing.copy(name = trimmed, colorHex = colorHex))
+        categoryDao.update(existing.copy(name = trimmed, colorHex = colorHex.uppercase()))
         return AddCategoryResult.Created(id)
     }
 
@@ -452,6 +501,12 @@ class FinanceRepository(
         if (fromCategoryId == toCategoryId) return
         categoryDao.reassignAndDelete(fromCategoryId, toCategoryId)
     }
+}
+
+sealed interface TripResult {
+    data class Saved(val id: Long) : TripResult
+    data object NameTaken : TripResult
+    data object InvalidName : TripResult
 }
 
 sealed interface AddCategoryResult {

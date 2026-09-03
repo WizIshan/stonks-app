@@ -6,30 +6,39 @@ import androidx.compose.ui.graphics.Color
 import androidx.core.graphics.toColorInt
 import dev.wizishan.stonks.core.CategorySlot
 import dev.wizishan.stonks.core.CategorySlots
+import dev.wizishan.stonks.core.ColorMath
 
 /**
- * Compose adapter over [CategorySlots]. See DESIGN.md §3b.
+ * Turns a stored category colour into the [Color] to paint on the current surface.
+ * See DESIGN.md §3b.
  *
- * The slots themselves live in `core` as plain Kotlin so the data layer can seed and
- * assign them; this file only turns a stored hex into the [Color] for the surface being
- * painted.
+ * Two paths, in this order:
+ *
+ * 1. **One of the eight built-in slots** — its hand-picked step for this surface is used
+ *    verbatim. Those pairs were chosen and validated together, so nothing recomputes them.
+ * 2. **Any other colour** — the hue and chroma are kept exactly as chosen and only the
+ *    lightness is nudged into the band that reads against this surface. A colour picked in
+ *    light mode is still recognisably itself in dark mode instead of disappearing into it.
  *
  * Deliberately NOT part of `MaterialTheme.colorScheme`: dynamic color follows the user's
- * wallpaper, and a category's identity must not. If Food is blue it is blue in the chart,
- * the history chip and the budget meter, this month and next, on every device.
+ * wallpaper, and a category's identity must not.
  */
 object CategoryPalette {
 
     /**
-     * Resolve a stored hex to the colour for the current surface. An unknown hex falls
-     * back to the reserved grey, so a hand-edited backup can never crash a chart.
+     * Resolve a stored hex for the current surface. An unparseable value falls back to the
+     * reserved grey, so a hand-edited backup can never crash a chart.
      */
     @Composable
     @ReadOnlyComposable
-    fun resolve(hex: String?): Color = colorFor(
-        slot = CategorySlots.forHex(hex) ?: CategorySlots.other,
-        dark = LocalIsDarkTheme.current,
-    )
+    fun resolve(hex: String?): Color {
+        val dark = LocalIsDarkTheme.current
+        CategorySlots.forHex(hex)?.let { return colorFor(it, dark) }
+
+        val custom = hex?.takeIf(ColorMath::isValidHex)
+            ?: return colorFor(CategorySlots.other, dark)
+        return Color(ColorMath.adaptForSurface(custom, dark).toColorInt())
+    }
 
     /** The reserved grey for the "Other" bucket charts fold small categories into. */
     @Composable

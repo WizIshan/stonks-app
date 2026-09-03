@@ -13,6 +13,7 @@ import dev.wizishan.stonks.ui.entry.AddEntryViewModel
 import dev.wizishan.stonks.ui.history.HistoryViewModel
 import dev.wizishan.stonks.ui.recurring.RecurringViewModel
 import dev.wizishan.stonks.ui.settings.SettingsViewModel
+import dev.wizishan.stonks.ui.trips.TripsViewModel
 
 /** Builds ViewModels from the [dev.wizishan.stonks.AppContainer]. */
 object AppViewModelProvider {
@@ -30,6 +31,7 @@ object AppViewModelProvider {
         initializer { DashboardViewModel(stonksApplication().container.repository) }
         initializer { RecurringViewModel(stonksApplication().container.repository) }
         initializer { CategoriesViewModel(stonksApplication().container.repository) }
+        initializer { TripsViewModel(stonksApplication().container.repository) }
         initializer { BudgetViewModel(stonksApplication().container.repository) }
         initializer {
             val container = stonksApplication().container

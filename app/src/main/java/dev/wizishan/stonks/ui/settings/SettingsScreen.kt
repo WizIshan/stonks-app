@@ -48,6 +48,7 @@ import dev.wizishan.stonks.ui.theme.StonksTheme
 @Composable
 fun SettingsRoute(
     onCategoriesClick: () -> Unit,
+    onTripsClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
@@ -89,6 +90,7 @@ fun SettingsRoute(
         state = state,
         snackbarHostState = snackbarHostState,
         onCategoriesClick = onCategoriesClick,
+        onTripsClick = onTripsClick,
         onExport = viewModel::export,
         onPickFile = { picker.launch(arrayOf("*/*")) },
         onConfirmImport = viewModel::confirmImport,
@@ -103,6 +105,7 @@ fun SettingsScreen(
     state: SettingsUiState,
     snackbarHostState: SnackbarHostState,
     onCategoriesClick: () -> Unit,
+    onTripsClick: () -> Unit,
     onExport: () -> Unit,
     onPickFile: () -> Unit,
     onConfirmImport: () -> Unit,
@@ -131,6 +134,15 @@ fun SettingsScreen(
             ) {
                 OutlinedButton(onClick = onCategoriesClick) {
                     Text(stringResource(R.string.categories_manage))
+                }
+            }
+
+            ActionCard(
+                title = stringResource(R.string.trips_title),
+                description = stringResource(R.string.trips_manage_description),
+            ) {
+                OutlinedButton(onClick = onTripsClick) {
+                    Text(stringResource(R.string.trips_title))
                 }
             }
 
@@ -261,7 +273,7 @@ private fun SettingsPreview() {
         SettingsScreen(
             state = SettingsUiState(),
             snackbarHostState = remember { SnackbarHostState() },
-            onCategoriesClick = {}, onExport = {}, onPickFile = {}, onConfirmImport = {}, onCancelImport = {},
+            onCategoriesClick = {}, onTripsClick = {}, onExport = {}, onPickFile = {}, onConfirmImport = {}, onCancelImport = {},
         )
     }
 }

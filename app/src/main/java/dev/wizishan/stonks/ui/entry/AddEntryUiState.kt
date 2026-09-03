@@ -36,6 +36,8 @@ data class AddEntryUiState(
     val deleteRequested: Boolean = false,
     /** Non-null while the inline new-category prompt is open; holds what has been typed. */
     val newCategoryName: String? = null,
+    /** Non-null while the inline new-trip prompt is open. */
+    val newTripName: String? = null,
     val saving: Boolean = false,
 ) {
 

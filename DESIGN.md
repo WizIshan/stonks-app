@@ -107,15 +107,29 @@ Assigned in **fixed slot order** at category creation and stored in `Category.co
 | 8 | red | `#E34948` | `#E66767` | Bills & Utilities |
 | — | gray | `#898781` | `#898781` | **"Other"** (reserved fold bucket — not a real category) |
 
+These eight are the **defaults and the presets**, not a limit. A new category takes the
+next unused one, so leaving the picker alone still produces a set that reads well together
+— but any colour can be chosen.
+
+**What the eight still guarantee, and a custom colour does not:** no two of them are
+confusable under simulated colour blindness, and each was checked against both surfaces.
+An arbitrary colour carries no such promise. What makes that acceptable here is the rule
+below it — every mark in this app is name-labeled, so colour reinforces identity rather
+than carrying it. Someone who picks two similar blues gets two similar blues, and their
+labels still tell them apart.
+
 **Rules:**
-- The palette is **never extended**. A new category takes one of these eight — never a
-  generated, cycled or randomised hue. This is the rule everything else here rests on.
-- A new category **defaults to the next free slot**, so leaving the picker alone keeps
-  slot order. The user may choose any of the eight instead, and past the eighth they must:
-  duplicates are fine, because a category is always name-labeled and colour is never the
-  sole identifier.
+- A **custom colour keeps its hue and chroma exactly**, but its lightness is clamped into
+  the readable band for whichever surface it is being drawn on
+  (`ColorMath.adaptForSurface`). This is the one guarantee kept by force: a near-black
+  picked in light mode would otherwise vanish in dark mode. The eight built-in colours
+  bypass this entirely — their light/dark pairs were chosen by hand and are used verbatim.
+- Colours are **never generated, cycled or randomised** by the app. Every colour is either
+  a built-in or one a person chose.
 - A category's colour is editable and lives on its row, so changing it updates the chart,
   the history chip and the budget meter together.
+- Duplicates are allowed. A category is always name-labeled, so colour is never the sole
+  identifier.
 - Gray is reserved for the "Other" bucket. Never assign it to a real category.
 - The dark column is a **selected** set of steps for the dark surface, not an
   automatic lightening of the light column.
