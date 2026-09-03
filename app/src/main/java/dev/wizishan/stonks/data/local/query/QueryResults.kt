@@ -50,6 +50,16 @@ data class MonthTotal(
     val totalMinor: Long,
 )
 
+/** What a category is carrying, so a delete can say what it will move. */
+data class CategoryUsage(
+    val categoryId: Long,
+    val expenseCount: Int,
+    val recurringRuleCount: Int,
+    val budgetCount: Int,
+) {
+    val isEmpty: Boolean get() = expenseCount == 0 && recurringRuleCount == 0 && budgetCount == 0
+}
+
 /**
  * How the History list is ordered.
  *

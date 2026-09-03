@@ -108,9 +108,14 @@ Assigned in **fixed slot order** at category creation and stored in `Category.co
 | — | gray | `#898781` | `#898781` | **"Other"** (reserved fold bucket — not a real category) |
 
 **Rules:**
-- Slots are assigned **in order**, never cycled and never randomly generated.
-- A 9th+ custom category **picks** one of the 8 existing slots (duplicates are fine —
-  every category is always name-labeled, so color is never the sole identifier).
+- The palette is **never extended**. A new category takes one of these eight — never a
+  generated, cycled or randomised hue. This is the rule everything else here rests on.
+- A new category **defaults to the next free slot**, so leaving the picker alone keeps
+  slot order. The user may choose any of the eight instead, and past the eighth they must:
+  duplicates are fine, because a category is always name-labeled and colour is never the
+  sole identifier.
+- A category's colour is editable and lives on its row, so changing it updates the chart,
+  the history chip and the budget meter together.
 - Gray is reserved for the "Other" bucket. Never assign it to a real category.
 - The dark column is a **selected** set of steps for the dark surface, not an
   automatic lightening of the light column.

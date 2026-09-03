@@ -153,4 +153,27 @@
     <string name="settings_import_failed_version_detail">This file is format version %1$d and this app understands version %2$d. Update the app and try again.</string>
     <string name="settings_import_failed_invalid">That backup is incomplete</string>
     <string name="settings_import_failed_invalid_detail">%1$s. Nothing was changed.</string>
+    <!-- Categories -->
+    <string name="categories_title">Categories</string>
+    <string name="categories_manage">Categories</string>
+    <string name="categories_manage_description">Add your own, rename them, or change the colour they use in charts.</string>
+    <string name="categories_new">New category</string>
+    <string name="categories_edit">Edit category</string>
+    <string name="categories_name_label">Name</string>
+    <string name="categories_name_error">Give it a name</string>
+    <string name="categories_name_taken">There is already a category with that name</string>
+    <string name="categories_colour_label">Colour</string>
+    <string name="categories_colour_reused">All eight colours are in use, so this one is shared. Categories are always named, so it stays clear which is which.</string>
+    <string name="categories_save">Save</string>
+    <string name="categories_usage_empty">Nothing logged</string>
+    <string name="categories_usage_entries">%1$d entries</string>
+    <string name="categories_usage_rules">, %1$d repeating</string>
+    <string name="categories_usage_budget">, budgeted</string>
+    <string name="categories_delete_title">Delete %1$s?</string>
+    <string name="categories_delete_move">Move its entries to</string>
+    <string name="categories_delete_note">Its entries and repeating rules move to the category you pick. Any budget on it is removed.</string>
+    <string name="categories_delete_empty_note">Nothing is using it, so nothing moves.</string>
+    <string name="categories_last_category">The last category cannot be deleted — every expense needs one.</string>
+    <string name="categories_no_free_slot">All eight colours are in use. Pick one to share.</string>
+    <string name="add_new_category">New category</string>
 </resources>

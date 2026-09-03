@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -18,6 +19,7 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
@@ -82,6 +84,7 @@ fun AddEntryRoute(
     val savedIncome = stringResource(R.string.add_saved_income)
     val savedRecurring = stringResource(R.string.add_saved_recurring)
     val saveFailed = stringResource(R.string.add_save_failed)
+    val noFreeSlot = stringResource(R.string.categories_no_free_slot)
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -100,6 +103,8 @@ fun AddEntryRoute(
                 // on, not on a screen that is about to disappear.
                 is AddEntryEvent.Updated, is AddEntryEvent.Deleted -> onBack()
 
+                is AddEntryEvent.NoFreeCategorySlot -> snackbarHostState.showMessage(noFreeSlot)
+
                 is AddEntryEvent.SaveFailed -> snackbarHostState.showMessage(saveFailed)
             }
         }
@@ -117,6 +122,10 @@ fun AddEntryRoute(
         onNoteChange = viewModel::setNote,
         onSave = viewModel::save,
         onFrequencyChange = viewModel::setFrequency,
+        onNewCategory = viewModel::startNewCategory,
+        onNewCategoryName = viewModel::setNewCategoryName,
+        onNewCategoryConfirm = viewModel::confirmNewCategory,
+        onNewCategoryCancel = viewModel::cancelNewCategory,
         onDeleteRequest = viewModel::requestDelete,
         onDeleteCancel = viewModel::cancelDelete,
         onDeleteConfirm = viewModel::confirmDelete,
@@ -139,6 +148,10 @@ fun AddEntryScreen(
     onNoteChange: (String) -> Unit,
     onSave: () -> Unit,
     onFrequencyChange: (RecurringFrequency?) -> Unit,
+    onNewCategory: () -> Unit = {},
+    onNewCategoryName: (String) -> Unit = {},
+    onNewCategoryConfirm: () -> Unit = {},
+    onNewCategoryCancel: () -> Unit = {},
     onDeleteRequest: () -> Unit = {},
     onDeleteCancel: () -> Unit = {},
     onDeleteConfirm: () -> Unit = {},
@@ -207,6 +220,7 @@ fun AddEntryScreen(
                     selectedId = state.categoryId,
                     showError = state.validationVisible && state.categoryMissing,
                     onSelect = onCategoryChange,
+                    onNewCategory = onNewCategory,
                 )
                 if (state.trips.isNotEmpty()) {
                     TripPicker(
@@ -254,6 +268,15 @@ fun AddEntryScreen(
         }
     }
 
+    if (state.newCategoryName != null) {
+        NewCategoryDialog(
+            name = state.newCategoryName,
+            onNameChange = onNewCategoryName,
+            onConfirm = onNewCategoryConfirm,
+            onDismiss = onNewCategoryCancel,
+        )
+    }
+
     if (state.deleteRequested) {
         AlertDialog(
             onDismissRequest = onDeleteCancel,
@@ -295,6 +318,37 @@ private fun EntryTypeSelector(
             }
         }
     }
+}
+
+@Composable
+private fun NewCategoryDialog(
+    name: String,
+    onNameChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.add_new_category)) },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = onNameChange,
+                label = { Text(stringResource(R.string.categories_name_label)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = name.isNotBlank()) {
+                Text(stringResource(R.string.categories_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+        },
+    )
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -420,6 +474,7 @@ private fun CategoryPicker(
     selectedId: Long?,
     showError: Boolean,
     onSelect: (Long) -> Unit,
+    onNewCategory: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
         Text(
@@ -446,6 +501,19 @@ private fun CategoryPicker(
                         leadingIcon = { ColorDot(category.colorHex) },
                     )
                 }
+                // Creating one from here, rather than sending someone to Settings in the
+                // middle of logging an expense.
+                AssistChip(
+                    onClick = onNewCategory,
+                    label = { Text(stringResource(R.string.add_new_category)) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(Spacing.lg),
+                        )
+                    },
+                )
             }
         }
         if (showError) {

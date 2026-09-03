@@ -27,6 +27,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dev.wizishan.stonks.R
 import dev.wizishan.stonks.ui.budget.BudgetRoute
+import dev.wizishan.stonks.ui.categories.CategoriesRoute
 import dev.wizishan.stonks.ui.dashboard.DashboardRoute
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -57,6 +58,7 @@ object Routes {
         return "entry?entryId=${item.id}&entryType=${type.name}"
     }
     const val RECURRING = "recurring"
+    const val CATEGORIES = "categories"
 }
 
 /**
@@ -135,7 +137,10 @@ fun StonksApp(
                 BudgetRoute()
             }
             composable(Routes.SETTINGS) {
-                SettingsRoute()
+                SettingsRoute(onCategoriesClick = { navController.navigate(Routes.CATEGORIES) })
+            }
+            composable(Routes.CATEGORIES) {
+                CategoriesRoute(onBack = { navController.popBackStack() })
             }
             composable(
                 route = Routes.ENTRY,

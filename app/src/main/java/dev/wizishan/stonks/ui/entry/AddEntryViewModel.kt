@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dev.wizishan.stonks.core.Money
 import dev.wizishan.stonks.data.local.entity.RecurringFrequency
 import dev.wizishan.stonks.data.recurring.RecurringGenerator
+import dev.wizishan.stonks.data.repository.AddCategoryResult
 import dev.wizishan.stonks.data.repository.FinanceRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -173,6 +174,47 @@ class AddEntryViewModel(
         }
     }
 
+    fun startNewCategory() = _uiState.update { it.copy(newCategoryName = "") }
+
+    fun setNewCategoryName(name: String) =
+        _uiState.update { it.copy(newCategoryName = name) }
+
+    fun cancelNewCategory() = _uiState.update { it.copy(newCategoryName = null) }
+
+    /**
+     * Create a category from the entry form and select it straight away.
+     *
+     * Takes the next free slot without asking. Someone halfway through logging an expense
+     * wants the category to exist, not a colour decision; the colour is changeable in
+     * Settings afterwards. Once all eight are used this needs a choice, so it hands off
+     * to the Categories screen rather than picking a duplicate on their behalf.
+     */
+    fun confirmNewCategory() {
+        val name = _uiState.value.newCategoryName?.trim().orEmpty()
+        if (name.isEmpty()) return
+
+        viewModelScope.launch {
+            when (val result = repository.addCategory(name)) {
+                is AddCategoryResult.Created -> {
+                    _uiState.update { it.copy(newCategoryName = null, categoryId = result.id) }
+                }
+
+                AddCategoryResult.NameTaken -> {
+                    // It already exists, which is what the user wanted anyway — select it.
+                    val existing = repository.findCategoryByName(name)
+                    _uiState.update { it.copy(newCategoryName = null, categoryId = existing?.id ?: it.categoryId) }
+                }
+
+                AddCategoryResult.NoFreeSlot -> {
+                    _uiState.update { it.copy(newCategoryName = null) }
+                    _events.send(AddEntryEvent.NoFreeCategorySlot)
+                }
+
+                AddCategoryResult.InvalidName -> _uiState.update { it.copy(newCategoryName = null) }
+            }
+        }
+    }
+
     fun requestDelete() = _uiState.update { it.copy(deleteRequested = true) }
 
     fun cancelDelete() = _uiState.update { it.copy(deleteRequested = false) }
@@ -254,6 +296,8 @@ sealed interface AddEntryEvent {
     data class Updated(val type: EntryType, val amountMinor: Long) : AddEntryEvent
 
     data object Deleted : AddEntryEvent
+
+    data object NoFreeCategorySlot : AddEntryEvent
 
     data class SaveFailed(val message: String?) : AddEntryEvent
 }

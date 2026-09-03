@@ -17,6 +17,7 @@ import dev.wizishan.stonks.data.local.entity.RecurringFrequency
 import dev.wizishan.stonks.data.local.entity.RecurringRule
 import dev.wizishan.stonks.data.local.entity.RecurringType
 import dev.wizishan.stonks.data.local.entity.Trip
+import dev.wizishan.stonks.data.local.query.CategoryUsage
 import dev.wizishan.stonks.data.local.query.ExpenseListItem
 import dev.wizishan.stonks.data.local.query.HistorySort
 import dev.wizishan.stonks.data.local.query.IncomeListItem
@@ -55,6 +56,10 @@ class FinanceRepository(
     fun observeRecurringRules(): Flow<List<RecurringRule>> = recurringRuleDao.observeAll()
 
     fun observeBudgets(): Flow<List<Budget>> = budgetDao.observeAll()
+
+    fun observeCategoryUsage(): Flow<List<CategoryUsage>> = categoryDao.observeUsage()
+
+    suspend fun findCategoryByName(name: String): Category? = categoryDao.getByName(name.trim())
 
     /**
      * Every budget with this month's spend against it.
@@ -415,15 +420,37 @@ class FinanceRepository(
     }
 
     /**
-     * Move every expense off [fromCategoryId] and then delete it.
+     * Rename a category, or move it to a different palette slot.
      *
-     * The foreign key is RESTRICT, so a category with history cannot be deleted directly;
-     * this is the supported way through, and it keeps the two steps in one place so a
-     * caller can't do half of it.
+     * The colour is stored on the row, so changing it here changes it everywhere at once —
+     * the chart, the history chips and the budget meter all read the same value.
+     */
+    suspend fun updateCategory(
+        id: Long,
+        name: String,
+        colorHex: String,
+    ): AddCategoryResult {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return AddCategoryResult.InvalidName
+        if (CategorySlots.forHex(colorHex) == null) return AddCategoryResult.InvalidName
+
+        val clash = categoryDao.getByName(trimmed)
+        if (clash != null && clash.id != id) return AddCategoryResult.NameTaken
+
+        val existing = categoryDao.getById(id) ?: return AddCategoryResult.InvalidName
+        categoryDao.update(existing.copy(name = trimmed, colorHex = colorHex))
+        return AddCategoryResult.Created(id)
+    }
+
+    /**
+     * Move everything off [fromCategoryId] and then delete it.
+     *
+     * Expenses and recurring rules both RESTRICT on category, so both have to move first;
+     * the DAO does it in one transaction so a caller cannot do half of it.
      */
     suspend fun reassignAndDeleteCategory(fromCategoryId: Long, toCategoryId: Long) {
-        expenseDao.reassignCategory(fromCategoryId, toCategoryId)
-        categoryDao.getById(fromCategoryId)?.let { categoryDao.delete(it) }
+        if (fromCategoryId == toCategoryId) return
+        categoryDao.reassignAndDelete(fromCategoryId, toCategoryId)
     }
 }
 

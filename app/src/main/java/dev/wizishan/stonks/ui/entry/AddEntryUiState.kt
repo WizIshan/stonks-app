@@ -34,6 +34,8 @@ data class AddEntryUiState(
     /** Errors stay hidden until the first save attempt, so an empty form is not shouting. */
     val validationVisible: Boolean = false,
     val deleteRequested: Boolean = false,
+    /** Non-null while the inline new-category prompt is open; holds what has been typed. */
+    val newCategoryName: String? = null,
     val saving: Boolean = false,
 ) {
 
