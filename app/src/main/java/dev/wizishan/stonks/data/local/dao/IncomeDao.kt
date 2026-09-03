@@ -6,7 +6,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import dev.wizishan.stonks.data.local.entity.Income
-import dev.wizishan.stonks.data.local.query.ExpenseSort
+import dev.wizishan.stonks.data.local.query.HistorySort
 import dev.wizishan.stonks.data.local.query.IncomeListItem
 import dev.wizishan.stonks.data.local.query.MonthTotal
 import kotlinx.coroutines.flow.Flow
@@ -34,6 +34,7 @@ interface IncomeDao {
           CASE WHEN :sort = 'DATE_ASC' THEN i.date END ASC,
           CASE WHEN :sort = 'AMOUNT_DESC' THEN i.amountMinor END DESC,
           CASE WHEN :sort = 'AMOUNT_ASC' THEN i.amountMinor END ASC,
+          i.date DESC,
           i.id DESC
         """
     )
@@ -87,5 +88,5 @@ fun IncomeDao.observeFiltered(
     from: LocalDate? = null,
     to: LocalDate? = null,
     source: String? = null,
-    sort: ExpenseSort = ExpenseSort.DATE_DESC,
+    sort: HistorySort = HistorySort.DATE_DESC,
 ): Flow<List<IncomeListItem>> = observeFilteredRaw(from, to, source, sort.name)

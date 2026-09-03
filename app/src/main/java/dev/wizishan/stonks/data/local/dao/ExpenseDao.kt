@@ -8,7 +8,7 @@ import androidx.room.Update
 import dev.wizishan.stonks.data.local.entity.Expense
 import dev.wizishan.stonks.data.local.query.CategoryTotal
 import dev.wizishan.stonks.data.local.query.ExpenseListItem
-import dev.wizishan.stonks.data.local.query.ExpenseSort
+import dev.wizishan.stonks.data.local.query.HistorySort
 import dev.wizishan.stonks.data.local.query.MonthTotal
 import dev.wizishan.stonks.data.local.query.TripTotal
 import kotlinx.coroutines.flow.Flow
@@ -54,6 +54,9 @@ interface ExpenseDao {
           CASE WHEN :sort = 'AMOUNT_DESC' THEN e.amountMinor END DESC,
           CASE WHEN :sort = 'AMOUNT_ASC' THEN e.amountMinor END ASC,
           CASE WHEN :sort = 'CATEGORY_ASC' THEN c.name END COLLATE NOCASE ASC,
+          CASE WHEN :sort = 'TRIP_ASC' THEN (t.name IS NULL) END ASC,
+          CASE WHEN :sort = 'TRIP_ASC' THEN t.name END COLLATE NOCASE ASC,
+          e.date DESC,
           e.id DESC
         """
     )
@@ -153,5 +156,5 @@ fun ExpenseDao.observeFiltered(
     tripId: Long? = null,
     from: LocalDate? = null,
     to: LocalDate? = null,
-    sort: ExpenseSort = ExpenseSort.DATE_DESC,
+    sort: HistorySort = HistorySort.DATE_DESC,
 ): Flow<List<ExpenseListItem>> = observeFilteredRaw(categoryId, tripId, from, to, sort.name)

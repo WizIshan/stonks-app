@@ -50,11 +50,17 @@ data class MonthTotal(
     val totalMinor: Long,
 )
 
-/** How the History list is ordered. */
-enum class ExpenseSort {
+/**
+ * How the History list is ordered.
+ *
+ * CATEGORY_ASC and TRIP_ASC only mean something for expenses; income rows have neither,
+ * so they sort to the end of a mixed list.
+ */
+enum class HistorySort {
     DATE_DESC,
     DATE_ASC,
     AMOUNT_DESC,
     AMOUNT_ASC,
     CATEGORY_ASC,
+    TRIP_ASC,
 }

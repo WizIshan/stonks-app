@@ -31,4 +31,34 @@
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
     <string name="dismiss">Dismiss</string>
+    <string name="back">Back</string>
+    <!-- History screen -->
+    <string name="history_title">History</string>
+    <string name="history_add">Add</string>
+    <string name="history_sort">Sort</string>
+    <string name="history_sort_date_desc">Newest first</string>
+    <string name="history_sort_date_asc">Oldest first</string>
+    <string name="history_sort_amount_desc">Largest first</string>
+    <string name="history_sort_amount_asc">Smallest first</string>
+    <string name="history_sort_category">By category</string>
+    <string name="history_sort_trip">By trip</string>
+    <string name="history_filter_type">Type</string>
+    <string name="history_type_all">All</string>
+    <string name="history_type_expenses">Expenses</string>
+    <string name="history_type_income">Income</string>
+    <string name="history_filter_period">Period</string>
+    <string name="history_period_all">All time</string>
+    <string name="history_period_month">This month</string>
+    <string name="history_period_30">Last 30 days</string>
+    <string name="history_period_90">Last 90 days</string>
+    <string name="history_filter_category">Category</string>
+    <string name="history_filter_trip">Trip</string>
+    <string name="history_filter_any">Any</string>
+    <string name="history_clear_filters">Clear filters</string>
+    <string name="history_summary">%1$d entries · net %2$s</string>
+    <string name="history_income_label">Income</string>
+    <string name="history_empty_headline">Nothing logged yet</string>
+    <string name="history_empty_message">Add your first expense to see it here.</string>
+    <string name="history_no_matches_headline">No matches</string>
+    <string name="history_no_matches_message">Nothing matches these filters.</string>
 </resources>

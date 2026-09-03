@@ -1,7 +1,7 @@
 package dev.wizishan.stonks.data.local
 
 import dev.wizishan.stonks.data.local.dao.observeFiltered
-import dev.wizishan.stonks.data.local.query.ExpenseSort
+import dev.wizishan.stonks.data.local.query.HistorySort
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -46,7 +46,7 @@ class IncomeDaoTest : DatabaseTest() {
 
         assertEquals(
             listOf(250_000L, 40_000L),
-            dao.observeFiltered(sort = ExpenseSort.AMOUNT_DESC).first().map { it.amountMinor },
+            dao.observeFiltered(sort = HistorySort.AMOUNT_DESC).first().map { it.amountMinor },
         )
     }
 

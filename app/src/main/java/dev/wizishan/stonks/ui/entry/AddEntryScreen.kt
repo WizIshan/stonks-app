@@ -16,7 +16,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -63,7 +67,8 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 @Composable
-fun AddEntryScreen(
+fun AddEntryRoute(
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AddEntryViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
@@ -99,6 +104,7 @@ fun AddEntryScreen(
         onSourceChange = viewModel::setSource,
         onNoteChange = viewModel::setNote,
         onSave = viewModel::save,
+        onBack = onBack,
         modifier = modifier,
     )
 }
@@ -116,11 +122,26 @@ fun AddEntryScreen(
     onSourceChange: (String) -> Unit,
     onNoteChange: (String) -> Unit,
     onSave: () -> Unit,
+    onBack: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.add_title)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.add_title)) },
+                navigationIcon = {
+                    if (onBack != null) {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.back),
+                            )
+                        }
+                    }
+                },
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         Column(

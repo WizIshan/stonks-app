@@ -9,7 +9,14 @@ import dev.wizishan.stonks.data.local.entity.Category
 import dev.wizishan.stonks.data.local.entity.Expense
 import dev.wizishan.stonks.data.local.entity.Income
 import dev.wizishan.stonks.data.local.entity.Trip
+import dev.wizishan.stonks.data.local.query.ExpenseListItem
+import dev.wizishan.stonks.data.local.query.HistorySort
+import dev.wizishan.stonks.data.local.query.IncomeListItem
+import dev.wizishan.stonks.data.local.dao.observeFiltered
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 
 /**
@@ -33,6 +40,52 @@ class FinanceRepository(
     fun observeTrips(): Flow<List<Trip>> = tripDao.observeAll()
 
     fun observeIncomeSources(): Flow<List<String>> = incomeDao.observeSources()
+
+    /**
+     * The History list: expenses and income as one stream.
+     *
+     * They live in separate tables, so each side is filtered and sorted in SQL and the
+     * two are merged here. The merge re-sorts rather than interleaving, because a
+     * comparator that spans both types is the only thing that can order a mixed list
+     * consistently — and because CATEGORY_ASC and TRIP_ASC have no meaning for income,
+     * which is why those push income to the end instead of inventing a key for it.
+     *
+     * [today] is passed in rather than read from the clock so period filters are testable.
+     */
+    fun observeHistory(
+        filter: HistoryFilter,
+        today: LocalDate = LocalDate.now(),
+    ): Flow<List<HistoryItem>> {
+        val range = filter.period.rangeOrNull(today)
+
+        val expenses: Flow<List<HistoryItem>> =
+            if (!filter.includesExpenses) {
+                flowOf(emptyList())
+            } else {
+                expenseDao.observeFiltered(
+                    categoryId = filter.categoryId,
+                    tripId = filter.tripId,
+                    from = range?.start,
+                    to = range?.endInclusive,
+                    sort = filter.sort,
+                ).map { rows -> rows.map(ExpenseListItem::toHistoryItem) }
+            }
+
+        val income: Flow<List<HistoryItem>> =
+            if (!filter.includesIncome) {
+                flowOf(emptyList())
+            } else {
+                incomeDao.observeFiltered(
+                    from = range?.start,
+                    to = range?.endInclusive,
+                    sort = filter.sort,
+                ).map { rows -> rows.map(IncomeListItem::toHistoryItem) }
+            }
+
+        return combine(expenses, income) { spend, earned ->
+            (spend + earned).sortedFor(filter.sort)
+        }
+    }
 
     // ---- writes ------------------------------------------------------------------
 
@@ -117,4 +170,47 @@ sealed interface AddCategoryResult {
     data object NameTaken : AddCategoryResult
     data object InvalidName : AddCategoryResult
     data object NoFreeSlot : AddCategoryResult
+}
+
+private fun ExpenseListItem.toHistoryItem() = HistoryItem.ExpenseItem(
+    id = id,
+    date = date,
+    amountMinor = amountMinor,
+    note = note,
+    categoryId = categoryId,
+    categoryName = categoryName,
+    categoryColorHex = categoryColorHex,
+    tripId = tripId,
+    tripName = tripName,
+)
+
+private fun IncomeListItem.toHistoryItem() = HistoryItem.IncomeItem(
+    id = id,
+    date = date,
+    amountMinor = amountMinor,
+    note = note,
+    source = source,
+)
+
+/**
+ * Orders a mixed list. Every comparator ends with the same tiebreakers so the order is
+ * total: two entries on the same day for the same amount never swap places between reads.
+ */
+private fun List<HistoryItem>.sortedFor(sort: HistorySort): List<HistoryItem> {
+    val incomeLast = compareBy<HistoryItem> { it is HistoryItem.IncomeItem }
+    val categoryName = { item: HistoryItem -> (item as? HistoryItem.ExpenseItem)?.categoryName.orEmpty() }
+    val tripName = { item: HistoryItem -> (item as? HistoryItem.ExpenseItem)?.tripName }
+
+    val comparator = when (sort) {
+        HistorySort.DATE_DESC -> compareByDescending<HistoryItem> { it.date }.then(incomeLast)
+        HistorySort.DATE_ASC -> compareBy<HistoryItem> { it.date }.then(incomeLast)
+        HistorySort.AMOUNT_DESC -> compareByDescending<HistoryItem> { it.amountMinor }.then(incomeLast)
+        HistorySort.AMOUNT_ASC -> compareBy<HistoryItem> { it.amountMinor }.then(incomeLast)
+        HistorySort.CATEGORY_ASC -> incomeLast.thenBy(String.CASE_INSENSITIVE_ORDER, categoryName)
+        HistorySort.TRIP_ASC -> incomeLast
+            .thenBy { tripName(it) == null }
+            .thenBy(String.CASE_INSENSITIVE_ORDER) { tripName(it).orEmpty() }
+    }
+
+    return sortedWith(comparator.thenByDescending { it.date }.thenByDescending { it.id })
 }

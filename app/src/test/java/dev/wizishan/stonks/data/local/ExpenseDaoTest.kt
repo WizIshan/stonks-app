@@ -1,7 +1,7 @@
 package dev.wizishan.stonks.data.local
 
 import dev.wizishan.stonks.data.local.dao.observeFiltered
-import dev.wizishan.stonks.data.local.query.ExpenseSort
+import dev.wizishan.stonks.data.local.query.HistorySort
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -80,15 +80,15 @@ class ExpenseDaoTest : DatabaseTest() {
         expense(amountMinor = 1000, date = "2026-09-15", categoryId = foodId)
         expense(amountMinor = 2000, date = "2026-09-10", categoryId = foodId)
 
-        suspend fun amountsSortedBy(sort: ExpenseSort) =
+        suspend fun amountsSortedBy(sort: HistorySort) =
             dao.observeFiltered(sort = sort).first().map { it.amountMinor }
 
-        assertEquals(listOf(1000L, 2000L, 3000L), amountsSortedBy(ExpenseSort.DATE_DESC))
-        assertEquals(listOf(3000L, 2000L, 1000L), amountsSortedBy(ExpenseSort.DATE_ASC))
-        assertEquals(listOf(3000L, 2000L, 1000L), amountsSortedBy(ExpenseSort.AMOUNT_DESC))
-        assertEquals(listOf(1000L, 2000L, 3000L), amountsSortedBy(ExpenseSort.AMOUNT_ASC))
+        assertEquals(listOf(1000L, 2000L, 3000L), amountsSortedBy(HistorySort.DATE_DESC))
+        assertEquals(listOf(3000L, 2000L, 1000L), amountsSortedBy(HistorySort.DATE_ASC))
+        assertEquals(listOf(3000L, 2000L, 1000L), amountsSortedBy(HistorySort.AMOUNT_DESC))
+        assertEquals(listOf(1000L, 2000L, 3000L), amountsSortedBy(HistorySort.AMOUNT_ASC))
 
-        val byCategory = dao.observeFiltered(sort = ExpenseSort.CATEGORY_ASC).first()
+        val byCategory = dao.observeFiltered(sort = HistorySort.CATEGORY_ASC).first()
         assertEquals(listOf("Food & Drink", "Food & Drink", "Transport"), byCategory.map { it.categoryName })
     }
 
