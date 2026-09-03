@@ -1,6 +1,8 @@
 package dev.wizishan.stonks.data.local
 
 import androidx.room.TypeConverter
+import dev.wizishan.stonks.data.local.entity.RecurringFrequency
+import dev.wizishan.stonks.data.local.entity.RecurringType
 import java.time.LocalDate
 
 /**
@@ -19,4 +21,19 @@ class Converters {
 
     @TypeConverter
     fun fromLocalDate(date: LocalDate?): String? = date?.toString()
+
+    // Enums are stored by name, not ordinal: an ordinal silently changes meaning if a
+    // constant is ever inserted in the middle, and a name does not.
+    @TypeConverter
+    fun toRecurringType(value: String?): RecurringType? = value?.let(RecurringType::valueOf)
+
+    @TypeConverter
+    fun fromRecurringType(type: RecurringType?): String? = type?.name
+
+    @TypeConverter
+    fun toRecurringFrequency(value: String?): RecurringFrequency? =
+        value?.let(RecurringFrequency::valueOf)
+
+    @TypeConverter
+    fun fromRecurringFrequency(frequency: RecurringFrequency?): String? = frequency?.name
 }

@@ -27,9 +27,7 @@ class AddEntryViewModelTest : DatabaseTest() {
     @Before
     fun setUpViewModel() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        viewModel = AddEntryViewModel(
-            FinanceRepository(db.categoryDao(), db.tripDao(), db.expenseDao(), db.incomeDao())
-        )
+        viewModel = AddEntryViewModel(repository(), recurringGenerator())
     }
 
     @After

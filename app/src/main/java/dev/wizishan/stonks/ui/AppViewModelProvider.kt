@@ -8,14 +8,19 @@ import dev.wizishan.stonks.StonksApplication
 import dev.wizishan.stonks.ui.dashboard.DashboardViewModel
 import dev.wizishan.stonks.ui.entry.AddEntryViewModel
 import dev.wizishan.stonks.ui.history.HistoryViewModel
+import dev.wizishan.stonks.ui.recurring.RecurringViewModel
 
 /** Builds ViewModels from the [dev.wizishan.stonks.AppContainer]. */
 object AppViewModelProvider {
 
     val Factory = viewModelFactory {
-        initializer { AddEntryViewModel(stonksApplication().container.repository) }
+        initializer {
+            val container = stonksApplication().container
+            AddEntryViewModel(container.repository, container.recurringGenerator)
+        }
         initializer { HistoryViewModel(stonksApplication().container.repository) }
         initializer { DashboardViewModel(stonksApplication().container.repository) }
+        initializer { RecurringViewModel(stonksApplication().container.repository) }
     }
 }
 

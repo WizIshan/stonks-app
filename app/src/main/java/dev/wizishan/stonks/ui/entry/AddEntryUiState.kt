@@ -2,6 +2,7 @@ package dev.wizishan.stonks.ui.entry
 
 import dev.wizishan.stonks.core.Money
 import dev.wizishan.stonks.data.local.entity.Category
+import dev.wizishan.stonks.data.local.entity.RecurringFrequency
 import dev.wizishan.stonks.data.local.entity.Trip
 import java.time.LocalDate
 
@@ -21,6 +22,8 @@ data class AddEntryUiState(
     val tripId: Long? = null,
     val source: String = "",
     val note: String = "",
+    /** Null means a one-off entry; anything else creates a recurring rule instead. */
+    val frequency: RecurringFrequency? = null,
     val categories: List<Category> = emptyList(),
     val trips: List<Trip> = emptyList(),
     val knownSources: List<String> = emptyList(),
@@ -33,6 +36,8 @@ data class AddEntryUiState(
     val amountMinor: Long? = Money.parseOrNull(amountInput)?.takeIf { it > 0 }
 
     val isExpense: Boolean get() = type == EntryType.EXPENSE
+
+    val isRecurring: Boolean get() = frequency != null
 
     val amountError: AmountError? = when {
         amountInput.isBlank() -> AmountError.MISSING

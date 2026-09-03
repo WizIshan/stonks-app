@@ -14,7 +14,7 @@ import java.time.LocalDate
 class FinanceRepositoryTest : DatabaseTest() {
 
     private val repository by lazy {
-        FinanceRepository(db.categoryDao(), db.tripDao(), db.expenseDao(), db.incomeDao())
+        repository()
     }
 
     @Test

@@ -31,7 +31,7 @@ class HistoryDeleteTest : DatabaseTest() {
     @Before
     fun setUpViewModel() {
         Dispatchers.setMain(mainDispatcher)
-        repository = FinanceRepository(db.categoryDao(), db.tripDao(), db.expenseDao(), db.incomeDao())
+        repository = repository()
         viewModel = HistoryViewModel(repository)
     }
 

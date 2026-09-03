@@ -27,11 +27,13 @@ import dev.wizishan.stonks.R
 import dev.wizishan.stonks.ui.dashboard.DashboardRoute
 import dev.wizishan.stonks.ui.entry.AddEntryRoute
 import dev.wizishan.stonks.ui.history.HistoryRoute
+import dev.wizishan.stonks.ui.recurring.RecurringRoute
 
 object Routes {
     const val DASHBOARD = "dashboard"
     const val HISTORY = "history"
     const val ADD = "add"
+    const val RECURRING = "recurring"
 }
 
 /**
@@ -94,13 +96,19 @@ fun StonksApp(
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(Routes.DASHBOARD) {
-                DashboardRoute(onAddClick = { navController.navigate(Routes.ADD) })
+                DashboardRoute(
+                    onAddClick = { navController.navigate(Routes.ADD) },
+                    onRecurringClick = { navController.navigate(Routes.RECURRING) },
+                )
             }
             composable(Routes.HISTORY) {
                 HistoryRoute(onAddClick = { navController.navigate(Routes.ADD) })
             }
             composable(Routes.ADD) {
                 AddEntryRoute(onBack = { navController.popBackStack() })
+            }
+            composable(Routes.RECURRING) {
+                RecurringRoute(onBack = { navController.popBackStack() })
             }
         }
     }

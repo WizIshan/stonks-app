@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,6 +47,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun DashboardRoute(
     onAddClick: () -> Unit,
+    onRecurringClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DashboardViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
@@ -55,6 +57,7 @@ fun DashboardRoute(
         onPreviousMonth = viewModel::previousMonth,
         onNextMonth = viewModel::nextMonth,
         onAddClick = onAddClick,
+        onRecurringClick = onRecurringClick,
         modifier = modifier,
     )
 }
@@ -66,11 +69,27 @@ fun DashboardScreen(
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
     onAddClick: () -> Unit,
+    onRecurringClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.dashboard_title)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.dashboard_title)) },
+                actions = {
+                    // Repeating rules are management, not a place you spend time, so they
+                    // live behind an action here rather than taking a slot in the bottom
+                    // bar that DESIGN.md section 7 reserves for the four main screens.
+                    IconButton(onClick = onRecurringClick) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = stringResource(R.string.recurring_open),
+                        )
+                    }
+                },
+            )
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier

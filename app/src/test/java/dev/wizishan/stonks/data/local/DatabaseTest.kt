@@ -1,5 +1,6 @@
 package dev.wizishan.stonks.data.local
 
+import android.app.Application
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
@@ -7,6 +8,8 @@ import dev.wizishan.stonks.data.local.entity.Category
 import dev.wizishan.stonks.data.local.entity.Expense
 import dev.wizishan.stonks.data.local.entity.Income
 import dev.wizishan.stonks.data.local.entity.Trip
+import dev.wizishan.stonks.data.recurring.RecurringGenerator
+import dev.wizishan.stonks.data.repository.FinanceRepository
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -32,9 +35,14 @@ const val ROBOLECTRIC_SDK = 35
  * These run on the JVM under Robolectric rather than on a device, so the whole suite is a
  * few seconds and needs no emulator — which is the point of testing the data layer before
  * any UI exists.
+ *
+ * They run against a plain [Application], not [dev.wizishan.stonks.StonksApplication]. The
+ * real one opens the on-disk database and schedules WorkManager in `onCreate`, none of
+ * which a DAO test wants — and WorkManager has no initializer under Robolectric, so
+ * booting it would fail before a single test ran.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE, sdk = [ROBOLECTRIC_SDK])
+@Config(manifest = Config.NONE, sdk = [ROBOLECTRIC_SDK], application = Application::class)
 abstract class DatabaseTest {
 
     protected lateinit var db: StonksDatabase
@@ -60,6 +68,21 @@ abstract class DatabaseTest {
     fun closeDb() {
         db.close()
     }
+
+    /**
+     * The repository over this test database. Built here so adding a DAO to
+     * [FinanceRepository] does not mean editing every test that uses one.
+     */
+    protected fun repository(): FinanceRepository = FinanceRepository(
+        categoryDao = db.categoryDao(),
+        tripDao = db.tripDao(),
+        expenseDao = db.expenseDao(),
+        incomeDao = db.incomeDao(),
+        recurringRuleDao = db.recurringRuleDao(),
+    )
+
+    /** The generator over this test database. */
+    protected fun recurringGenerator(): RecurringGenerator = RecurringGenerator(db)
 
     // ---- fixtures ----------------------------------------------------------------
 

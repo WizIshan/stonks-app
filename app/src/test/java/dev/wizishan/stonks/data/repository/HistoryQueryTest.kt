@@ -13,7 +13,7 @@ import java.time.LocalDate
 class HistoryQueryTest : DatabaseTest() {
 
     private val repository by lazy {
-        FinanceRepository(db.categoryDao(), db.tripDao(), db.expenseDao(), db.incomeDao())
+        repository()
     }
 
     private val today = LocalDate.parse("2026-09-15")

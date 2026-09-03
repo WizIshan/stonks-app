@@ -21,7 +21,14 @@
     <string name="add_source_error">Say where this came from</string>
     <string name="add_note_label">Note</string>
     <string name="add_note_hint">Optional</string>
+    <string name="add_repeat_label">Repeat</string>
+    <string name="add_repeat_never">One-off</string>
+    <string name="add_repeat_daily">Daily</string>
+    <string name="add_repeat_weekly">Weekly</string>
+    <string name="add_repeat_monthly">Monthly</string>
+    <string name="add_repeat_hint">Entries are created automatically on schedule.</string>
     <string name="add_save">Save</string>
+    <string name="add_saved_recurring">Repeating entry set up · %1$s</string>
     <string name="add_saved_expense">Expense saved · %1$s</string>
     <string name="add_saved_income">Income saved · %1$s</string>
     <string name="add_save_failed">Could not save that entry</string>
@@ -67,6 +74,15 @@
     <string name="history_no_matches_message">Nothing matches these filters.</string>
     <!-- Dashboard -->
     <string name="dashboard_title">Dashboard</string>
+    <string name="recurring_title">Repeating</string>
+    <string name="recurring_open">Repeating entries</string>
+    <string name="recurring_next_due">Next %1$s</string>
+    <string name="recurring_paused">Paused</string>
+    <string name="recurring_pause">Pause</string>
+    <string name="recurring_delete_title">Delete this rule?</string>
+    <string name="recurring_delete_message">%1$s will stop repeating. Entries it already created are kept.</string>
+    <string name="recurring_empty_headline">Nothing repeats yet</string>
+    <string name="recurring_empty_message">Set a repeat on an entry to have it created automatically.</string>
     <string name="dashboard_spent_this_month">Spent</string>
     <string name="dashboard_income">Income</string>
     <string name="dashboard_net">Net</string>

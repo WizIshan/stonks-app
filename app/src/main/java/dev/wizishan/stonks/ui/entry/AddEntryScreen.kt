@@ -54,6 +54,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.wizishan.stonks.R
 import dev.wizishan.stonks.core.Money
 import dev.wizishan.stonks.data.local.entity.Category
+import dev.wizishan.stonks.data.local.entity.RecurringFrequency
 import dev.wizishan.stonks.data.local.entity.Trip
 import dev.wizishan.stonks.ui.AppViewModelProvider
 import dev.wizishan.stonks.ui.components.ColorDot
@@ -77,13 +78,18 @@ fun AddEntryRoute(
 
     val savedExpense = stringResource(R.string.add_saved_expense)
     val savedIncome = stringResource(R.string.add_saved_income)
+    val savedRecurring = stringResource(R.string.add_saved_recurring)
     val saveFailed = stringResource(R.string.add_save_failed)
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             val message = when (event) {
                 is AddEntryEvent.Saved -> {
-                    val template = if (event.type == EntryType.EXPENSE) savedExpense else savedIncome
+                    val template = when {
+                        event.recurring -> savedRecurring
+                        event.type == EntryType.EXPENSE -> savedExpense
+                        else -> savedIncome
+                    }
                     template.format(Money.format(event.amountMinor))
                 }
 
@@ -104,6 +110,7 @@ fun AddEntryRoute(
         onSourceChange = viewModel::setSource,
         onNoteChange = viewModel::setNote,
         onSave = viewModel::save,
+        onFrequencyChange = viewModel::setFrequency,
         onBack = onBack,
         modifier = modifier,
     )
@@ -122,6 +129,7 @@ fun AddEntryScreen(
     onSourceChange: (String) -> Unit,
     onNoteChange: (String) -> Unit,
     onSave: () -> Unit,
+    onFrequencyChange: (RecurringFrequency?) -> Unit,
     onBack: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -184,6 +192,8 @@ fun AddEntryScreen(
                 )
             }
 
+            RepeatPicker(selected = state.frequency, onSelect = onFrequencyChange)
+
             OutlinedTextField(
                 value = state.note,
                 onValueChange = onNoteChange,
@@ -226,6 +236,47 @@ private fun EntryTypeSelector(
             ) {
                 Text(label)
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun RepeatPicker(
+    selected: RecurringFrequency?,
+    onSelect: (RecurringFrequency?) -> Unit,
+) {
+    val options: List<Pair<RecurringFrequency?, Int>> = listOf(
+        null to R.string.add_repeat_never,
+        RecurringFrequency.DAILY to R.string.add_repeat_daily,
+        RecurringFrequency.WEEKLY to R.string.add_repeat_weekly,
+        RecurringFrequency.MONTHLY to R.string.add_repeat_monthly,
+    )
+
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        Text(
+            text = stringResource(R.string.add_repeat_label),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+        ) {
+            options.forEach { (frequency, labelRes) ->
+                FilterChip(
+                    selected = frequency == selected,
+                    onClick = { onSelect(frequency) },
+                    label = { Text(stringResource(labelRes)) },
+                )
+            }
+        }
+        if (selected != null) {
+            Text(
+                text = stringResource(R.string.add_repeat_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -475,7 +526,7 @@ private fun AddEntryExpensePreview() {
             snackbarHostState = remember { SnackbarHostState() },
             onTypeChange = {}, onAmountChange = {}, onDateChange = {},
             onCategoryChange = {}, onTripChange = {}, onSourceChange = {},
-            onNoteChange = {}, onSave = {},
+            onNoteChange = {}, onSave = {}, onFrequencyChange = {},
         )
     }
 }
@@ -495,7 +546,7 @@ private fun AddEntryIncomePreview() {
             snackbarHostState = remember { SnackbarHostState() },
             onTypeChange = {}, onAmountChange = {}, onDateChange = {},
             onCategoryChange = {}, onTripChange = {}, onSourceChange = {},
-            onNoteChange = {}, onSave = {},
+            onNoteChange = {}, onSave = {}, onFrequencyChange = {},
         )
     }
 }
@@ -513,7 +564,7 @@ private fun AddEntryErrorsPreview() {
             snackbarHostState = remember { SnackbarHostState() },
             onTypeChange = {}, onAmountChange = {}, onDateChange = {},
             onCategoryChange = {}, onTripChange = {}, onSourceChange = {},
-            onNoteChange = {}, onSave = {},
+            onNoteChange = {}, onSave = {}, onFrequencyChange = {},
         )
     }
 }
