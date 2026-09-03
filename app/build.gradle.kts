@@ -1,3 +1,22 @@
+import java.util.Properties
+
+/**
+ * Release signing details, kept out of the repository.
+ *
+ * Create `keystore.properties` next to this file (it is gitignored) with:
+ *   storeFile=../stonks-release.jks
+ *   storePassword=...
+ *   keyAlias=stonks
+ *   keyPassword=...
+ *
+ * Without it the release build still assembles — it just comes out unsigned, so a debug
+ * build and CI do not need the secrets to exist.
+ */
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("app/keystore.properties")
+    if (file.exists()) file.inputStream().use(::load)
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -21,11 +40,27 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (keystoreProperties.isNotEmpty()) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             optimization {
+                // Left off deliberately. Shrinking needs keep rules for Room's generated
+                // code and the serialization plugin's, and getting those wrong fails at
+                // runtime rather than at build time. Not worth it for a personal app that
+                // is not fighting for install size.
                 enable = false
             }
+            signingConfig = signingConfigs.findByName("release")
         }
     }
     compileOptions {

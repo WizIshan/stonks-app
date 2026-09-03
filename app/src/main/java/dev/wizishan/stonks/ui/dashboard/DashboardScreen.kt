@@ -2,6 +2,9 @@ package dev.wizishan.stonks.ui.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +17,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +38,7 @@ import dev.wizishan.stonks.core.Money
 import dev.wizishan.stonks.data.repository.DashboardData
 import dev.wizishan.stonks.data.repository.MonthPoint
 import dev.wizishan.stonks.data.repository.RankedSlice
+import dev.wizishan.stonks.data.repository.TrendRange
 import dev.wizishan.stonks.ui.AppViewModelProvider
 import dev.wizishan.stonks.ui.components.BudgetMeter
 import dev.wizishan.stonks.ui.components.EmptyState
@@ -59,6 +64,7 @@ fun DashboardRoute(
         onNextMonth = viewModel::nextMonth,
         onAddClick = onAddClick,
         onRecurringClick = onRecurringClick,
+        onTrendRangeChange = viewModel::setTrendRange,
         modifier = modifier,
     )
 }
@@ -71,6 +77,7 @@ fun DashboardScreen(
     onNextMonth: () -> Unit,
     onAddClick: () -> Unit,
     onRecurringClick: () -> Unit = {},
+    onTrendRangeChange: (TrendRange) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -140,6 +147,10 @@ fun DashboardScreen(
 
                 if (state.data.trend.size >= 2) {
                     Section(stringResource(R.string.dashboard_trend)) {
+                        TrendRangePicker(
+                            selected = state.data.trendRange,
+                            onSelect = onTrendRangeChange,
+                        )
                         TrendLineChart(state.data.trend)
                     }
                 }
@@ -220,8 +231,37 @@ private fun MonthSelector(
     }
 }
 
+/** The range control sits above the plot, in one row, per DESIGN.md §4. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Section(title: String, content: @Composable () -> Unit) {
+private fun TrendRangePicker(
+    selected: TrendRange,
+    onSelect: (TrendRange) -> Unit,
+) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+    ) {
+        TrendRange.entries.forEach { range ->
+            FilterChip(
+                selected = range == selected,
+                onClick = { onSelect(range) },
+                label = { Text(stringResource(range.labelRes)) },
+            )
+        }
+    }
+}
+
+private val TrendRange.labelRes: Int
+    get() = when (this) {
+        TrendRange.THREE_MONTHS -> R.string.dashboard_trend_3m
+        TrendRange.SIX_MONTHS -> R.string.dashboard_trend_6m
+        TrendRange.ONE_YEAR -> R.string.dashboard_trend_1y
+        TrendRange.ALL_TIME -> R.string.dashboard_trend_all
+    }
+
+@Composable
+private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
         Text(
             text = title,

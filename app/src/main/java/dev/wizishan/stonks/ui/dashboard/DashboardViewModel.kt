@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.wizishan.stonks.data.budget.BudgetProgress
 import dev.wizishan.stonks.data.repository.DashboardData
 import dev.wizishan.stonks.data.repository.FinanceRepository
+import dev.wizishan.stonks.data.repository.TrendRange
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -38,10 +39,12 @@ class DashboardViewModel(
 
     private val month = MutableStateFlow(YearMonth.now())
 
-    val uiState: StateFlow<DashboardUiState> = month
-        .flatMapLatest { selected ->
+    private val trendRange = MutableStateFlow(TrendRange.THREE_MONTHS)
+
+    val uiState: StateFlow<DashboardUiState> = combine(month, trendRange, ::Pair)
+        .flatMapLatest { (selected, range) ->
             combine(
-                repository.observeDashboard(selected),
+                repository.observeDashboard(selected, range),
                 repository.observeBudgetProgress(selected),
             ) { data, budgets ->
                 DashboardUiState(data = data, budgets = budgets, loading = false)
@@ -52,6 +55,8 @@ class DashboardViewModel(
             started = SharingStarted.WhileSubscribed(StopTimeoutMillis),
             initialValue = DashboardUiState(),
         )
+
+    fun setTrendRange(range: TrendRange) = trendRange.update { range }
 
     fun previousMonth() = month.update { it.minusMonths(1) }
 

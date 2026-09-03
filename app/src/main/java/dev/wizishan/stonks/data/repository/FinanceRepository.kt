@@ -151,7 +151,10 @@ class FinanceRepository(
      * Trip totals are deliberately not month-scoped: a trip spans whatever dates it spans,
      * and clipping it to a calendar month would report a fraction of the trip as the trip.
      */
-    fun observeDashboard(month: YearMonth, trendMonths: Int = 12): Flow<DashboardData> {
+    fun observeDashboard(
+        month: YearMonth,
+        trendRange: TrendRange = TrendRange.THREE_MONTHS,
+    ): Flow<DashboardData> {
         val key = month.storageKey()
 
         val totals = combine(
@@ -167,7 +170,9 @@ class FinanceRepository(
         val trend = combine(
             expenseDao.observeMonthlyTotals(),
             incomeDao.observeMonthlyTotals(),
-        ) { spend, income -> buildTrend(spend, income, month, trendMonths) }
+        ) { spend, income ->
+            buildTrend(spend, income, month, monthsToCover(spend, income, month, trendRange))
+        }
 
         return combine(totals, breakdowns, trend) { (spend, income), (byCategory, byTrip), points ->
             DashboardData(
@@ -177,6 +182,7 @@ class FinanceRepository(
                 byCategory = byCategory,
                 byTrip = byTrip,
                 trend = points,
+                trendRange = trendRange,
             )
         }
     }

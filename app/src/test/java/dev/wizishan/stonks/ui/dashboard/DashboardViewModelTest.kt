@@ -2,6 +2,7 @@ package dev.wizishan.stonks.ui.dashboard
 
 import dev.wizishan.stonks.data.local.DatabaseTest
 import dev.wizishan.stonks.data.repository.FinanceRepository
+import dev.wizishan.stonks.data.repository.TrendRange
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -139,11 +140,42 @@ class DashboardViewModelTest : DatabaseTest() {
     }
 
     @Test
-    fun `the trend covers twelve months ending at the selected one`() = runTest(mainDispatcher) {
+    fun `the trend defaults to three months, ending at the selected one`() = runTest(mainDispatcher) {
         subscribe()
 
         val trend = viewModel.uiState.value.data.trend
-        assertEquals(12, trend.size)
+        assertEquals(3, trend.size)
         assertEquals(viewModel.uiState.value.data.month, trend.last().month)
+    }
+
+    @Test
+    fun `changing the range changes how far the trend reaches back`() = runTest(mainDispatcher) {
+        subscribe()
+
+        viewModel.setTrendRange(TrendRange.ONE_YEAR)
+        assertEquals(12, viewModel.uiState.value.data.trend.size)
+
+        viewModel.setTrendRange(TrendRange.SIX_MONTHS)
+        assertEquals(6, viewModel.uiState.value.data.trend.size)
+    }
+
+    @Test
+    fun `all time reaches back to the oldest entry`() = runTest(mainDispatcher) {
+        subscribe()
+        repository.addExpense(1000, today().minusMonths(7), seededCategoryId("Food & Drink"))
+
+        viewModel.setTrendRange(TrendRange.ALL_TIME)
+
+        assertEquals(8, viewModel.uiState.value.data.trend.size)
+    }
+
+    @Test
+    fun `the selected range is carried in state so the chips can show it`() = runTest(mainDispatcher) {
+        subscribe()
+        assertEquals(TrendRange.THREE_MONTHS, viewModel.uiState.value.data.trendRange)
+
+        viewModel.setTrendRange(TrendRange.ALL_TIME)
+
+        assertEquals(TrendRange.ALL_TIME, viewModel.uiState.value.data.trendRange)
     }
 }

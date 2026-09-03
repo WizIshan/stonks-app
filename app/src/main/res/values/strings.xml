@@ -94,7 +94,11 @@
     <string name="dashboard_net">Net</string>
     <string name="dashboard_by_category">Spend by category</string>
     <string name="dashboard_by_trip">Spend by trip</string>
-    <string name="dashboard_trend">Last 12 months</string>
+    <string name="dashboard_trend">Spend over time</string>
+    <string name="dashboard_trend_3m">3 months</string>
+    <string name="dashboard_trend_6m">6 months</string>
+    <string name="dashboard_trend_1y">1 year</string>
+    <string name="dashboard_trend_all">All time</string>
     <string name="dashboard_previous_month">Previous month</string>
     <string name="dashboard_next_month">Next month</string>
     <string name="dashboard_empty_headline">No spend this month</string>

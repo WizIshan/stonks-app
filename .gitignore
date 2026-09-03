@@ -11,3 +11,10 @@ local.properties
 
 # IDE — ignored wholesale; nothing in here is worth versioning for a solo project
 .idea/
+
+# Release signing. The keystore is the only thing that can publish an update to this app
+# on a device — losing it means uninstalling to install again, and it must never be
+# committed.
+*.jks
+*.keystore
+app/keystore.properties
