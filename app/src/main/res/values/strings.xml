@@ -32,6 +32,10 @@
     <string name="ok">OK</string>
     <string name="dismiss">Dismiss</string>
     <string name="back">Back</string>
+    <string name="delete">Delete</string>
+    <string name="history_delete_title">Delete this entry?</string>
+    <string name="history_delete_message">%1$s · %2$s on %3$s. This cannot be undone.</string>
+    <string name="history_swipe_to_delete">Swipe to delete</string>
     <!-- History screen -->
     <string name="history_title">History</string>
     <string name="history_add">Add</string>

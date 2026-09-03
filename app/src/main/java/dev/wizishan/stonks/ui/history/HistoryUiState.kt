@@ -11,6 +11,8 @@ data class HistoryUiState(
     val categories: List<Category> = emptyList(),
     val trips: List<Trip> = emptyList(),
     val loading: Boolean = true,
+    /** The row a delete has been requested for, awaiting confirmation. */
+    val pendingDelete: HistoryItem? = null,
 ) {
 
     /**

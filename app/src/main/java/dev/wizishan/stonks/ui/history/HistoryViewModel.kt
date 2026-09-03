@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.wizishan.stonks.data.local.query.HistorySort
 import dev.wizishan.stonks.data.repository.FinanceRepository
 import dev.wizishan.stonks.data.repository.HistoryFilter
+import dev.wizishan.stonks.data.repository.HistoryItem
 import dev.wizishan.stonks.data.repository.HistoryPeriod
 import dev.wizishan.stonks.data.repository.HistoryType
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,13 +16,16 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HistoryViewModel(
-    repository: FinanceRepository,
+    private val repository: FinanceRepository,
 ) : ViewModel() {
 
     private val filter = MutableStateFlow(HistoryFilter())
+
+    private val pendingDelete = MutableStateFlow<HistoryItem?>(null)
 
     private val items = filter.flatMapLatest { repository.observeHistory(it) }
 
@@ -30,13 +34,15 @@ class HistoryViewModel(
         items,
         repository.observeCategories(),
         repository.observeTrips(),
-    ) { filter, items, categories, trips ->
+        pendingDelete,
+    ) { filter, items, categories, trips, pending ->
         HistoryUiState(
             items = items,
             filter = filter,
             categories = categories,
             trips = trips,
             loading = false,
+            pendingDelete = pending,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -63,6 +69,23 @@ class HistoryViewModel(
     fun setSort(sort: HistorySort) = filter.update { it.copy(sort = sort) }
 
     fun clearFilters() = filter.update { HistoryFilter(sort = it.sort) }
+
+    /**
+     * Deleting is two steps on purpose.
+     *
+     * A swipe is easy to do by accident on a list you are scrolling, and an expense
+     * deleted by mistake is gone with no history to recover it from — so the swipe only
+     * asks, and the dialog decides (DESIGN.md section 7).
+     */
+    fun requestDelete(item: HistoryItem) = pendingDelete.update { item }
+
+    fun cancelDelete() = pendingDelete.update { null }
+
+    fun confirmDelete() {
+        val item = pendingDelete.value ?: return
+        pendingDelete.update { null }
+        viewModelScope.launch { repository.delete(item) }
+    }
 
     private companion object {
         /** Keeps the query alive across a rotation instead of tearing it down and re-running. */

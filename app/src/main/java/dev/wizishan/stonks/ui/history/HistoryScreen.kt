@@ -1,5 +1,6 @@
 package dev.wizishan.stonks.ui.history
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,7 +28,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -76,6 +81,9 @@ fun HistoryRoute(
         onPeriodChange = viewModel::setPeriod,
         onSortChange = viewModel::setSort,
         onClearFilters = viewModel::clearFilters,
+        onDeleteRequest = viewModel::requestDelete,
+        onDeleteCancel = viewModel::cancelDelete,
+        onDeleteConfirm = viewModel::confirmDelete,
         modifier = modifier,
     )
 }
@@ -91,6 +99,9 @@ fun HistoryScreen(
     onPeriodChange: (HistoryPeriod) -> Unit,
     onSortChange: (HistorySort) -> Unit,
     onClearFilters: () -> Unit,
+    onDeleteRequest: (HistoryItem) -> Unit,
+    onDeleteCancel: () -> Unit,
+    onDeleteConfirm: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -148,7 +159,7 @@ fun HistoryScreen(
                     HorizontalDivider()
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(state.items, key = { it.rowKey }) { item ->
-                            HistoryRow(item)
+                            SwipeableHistoryRow(item = item, onDeleteRequest = onDeleteRequest)
                             HorizontalDivider()
                         }
                     }
@@ -156,6 +167,98 @@ fun HistoryScreen(
             }
         }
     }
+
+    state.pendingDelete?.let { item ->
+        DeleteConfirmationDialog(
+            item = item,
+            onConfirm = onDeleteConfirm,
+            onDismiss = onDeleteCancel,
+        )
+    }
+}
+
+/**
+ * Swipe reveals the intent; the dialog decides.
+ *
+ * `confirmValueChange` always returns false, so the row springs back and nothing is
+ * removed until the dialog is answered. A swipe is easy to trigger by accident while
+ * scrolling, and there is no undo for a deleted expense.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeableHistoryRow(
+    item: HistoryItem,
+    onDeleteRequest: (HistoryItem) -> Unit,
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value != SwipeToDismissBoxValue.Settled) onDeleteRequest(item)
+            false
+        }
+    )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = { DeleteSwipeBackground() },
+    ) {
+        HistoryRow(item)
+    }
+}
+
+@Composable
+private fun DeleteSwipeBackground() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.errorContainer)
+            .padding(horizontal = Spacing.lg, vertical = Spacing.md),
+        contentAlignment = Alignment.CenterEnd,
+    ) {
+        Text(
+            text = stringResource(R.string.delete),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onErrorContainer,
+        )
+    }
+}
+
+@Composable
+private fun DeleteConfirmationDialog(
+    item: HistoryItem,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val formatter = remember { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM) }
+    val name = when (item) {
+        is HistoryItem.ExpenseItem -> item.categoryName
+        is HistoryItem.IncomeItem -> item.source
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.history_delete_title)) },
+        text = {
+            Text(
+                stringResource(
+                    R.string.history_delete_message,
+                    name,
+                    Money.format(item.amountMinor),
+                    item.date.format(formatter),
+                )
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(
+                    text = stringResource(R.string.delete),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+        },
+    )
 }
 
 @Composable
@@ -426,6 +529,7 @@ private fun HistoryPreview() {
             ),
             onAddClick = {}, onTypeChange = {}, onCategoryChange = {}, onTripChange = {},
             onPeriodChange = {}, onSortChange = {}, onClearFilters = {},
+            onDeleteRequest = {}, onDeleteCancel = {}, onDeleteConfirm = {},
         )
     }
 }
@@ -438,6 +542,7 @@ private fun HistoryEmptyPreview() {
             state = HistoryUiState(loading = false),
             onAddClick = {}, onTypeChange = {}, onCategoryChange = {}, onTripChange = {},
             onPeriodChange = {}, onSortChange = {}, onClearFilters = {},
+            onDeleteRequest = {}, onDeleteCancel = {}, onDeleteConfirm = {},
         )
     }
 }
@@ -453,6 +558,7 @@ private fun HistoryNoMatchesPreview() {
             ),
             onAddClick = {}, onTypeChange = {}, onCategoryChange = {}, onTripChange = {},
             onPeriodChange = {}, onSortChange = {}, onClearFilters = {},
+            onDeleteRequest = {}, onDeleteCancel = {}, onDeleteConfirm = {},
         )
     }
 }

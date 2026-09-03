@@ -190,6 +190,19 @@ class FinanceRepository(
         tripDao.insert(Trip(name = name.trim(), startDate = startDate, endDate = endDate))
 
     /**
+     * Remove one History row, whichever table it came from.
+     *
+     * Reads the row first rather than deleting by id so a row already gone (deleted on
+     * another screen, or a stale list) is a no-op instead of an error.
+     */
+    suspend fun delete(item: HistoryItem) {
+        when (item) {
+            is HistoryItem.ExpenseItem -> expenseDao.getById(item.id)?.let { expenseDao.delete(it) }
+            is HistoryItem.IncomeItem -> incomeDao.getById(item.id)?.let { incomeDao.delete(it) }
+        }
+    }
+
+    /**
      * Move every expense off [fromCategoryId] and then delete it.
      *
      * The foreign key is RESTRICT, so a category with history cannot be deleted directly;
